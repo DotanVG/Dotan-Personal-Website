@@ -96,7 +96,7 @@ img.avatar {
   border-radius: 30px;
 }
 
-/* Masonary grid for portfolio */
+/* Masonary grid for hobbies */
 .grid:after {
   content: '';
   display: block;
@@ -130,19 +130,19 @@ img.avatar {
   max-width: 100%;
 }
 
-/* Portfolio */
+/* Hobbies */
 .portolio-section .container {
   padding: 0;
 }
 
-.portfolio-item {
+.hobbies-item {
   position: relative;
   overflow: hidden;
   text-align: center;
   margin: 0;
 }
 
-.portfolio-item figcaption {
+.hobbies-item figcaption {
   position: absolute;
   top: auto;
   bottom: 0;
@@ -154,7 +154,7 @@ img.avatar {
   transform: translate3d(0, 100%, 0);
 }
 
-.portfolio-item figcaption h4 {
+.hobbies-item figcaption h4 {
   color: #222;
   font-size: 16px;
   text-transform: uppercase;
@@ -162,14 +162,14 @@ img.avatar {
   margin-bottom: 3px;
 }
 
-.portfolio-item figcaption p {
+.hobbies-item figcaption p {
   color: #444;
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 0;
 }
 
-.portfolio-item:hover figcaption {
+.hobbies-item:hover figcaption {
   transform: translate3d(0, 0, 0);
 }
 
