@@ -142,12 +142,22 @@
             <div class="pb-1 fw-bolder"> Be'er Sheva, Israel</div>
           </div>
           <div class="col-sm-2">
-            <div class="pb-1">Staus:</div>
-          </div>
-          <div class="col-sm-10">
-            <div class="pb-1 fw-bolder">Available</div>
-          </div>
-        </div>
+            <div class="pb-1">Status:</div>
+            </div>
+            <div class="col-sm-10">
+              <div class="pb-1 fw-bolder">Employed at Kanomi with 
+                <script>
+                  var startDate = new Date("November 1, 2022");
+                  var currentDate = new Date();
+                  var diff = currentDate.getMonth() - startDate.getMonth() + (12 * (currentDate.getFullYear() - startDate.getFullYear()));
+                  var years = Math.floor(diff / 12);
+                  var months = diff % 12;
+                  document.write(years + "." + months + " years of experience");
+                </script>
+              </div>
+            </div>
+            </div>
+            </div>
       </div>
       <div class="col-md-5 offset-md-1" data-aos="fade-left" data-aos-delay="100"><img class="avatar img-fluid mt-2" src="images/avatar.jpg" width="400" height="400" alt="Dotan Veretzky"/></div>
     </div>
