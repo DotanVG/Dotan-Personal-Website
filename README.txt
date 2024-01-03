@@ -1,23 +1,23 @@
-This Is My First Web Project
-----------------------------
-I'm Very Excited And I Hope You'll Enjoy Your Stay !
-Thank You For Visiting !
+# 🚀 My First Web Development Project
 
-The goals I achieved with this project:
-1.JavaScript, HTML, CSS and Bootstrap Hands-On Experience.
-2.Created a useful personal website.
-3.Learned to maintain a GitHub repository
-4.Became familiar with Heroku and app deployment.
-5.Utilized a SaaS product ("ProveSource")
+Welcome to my first web development project! I'm thrilled to share this journey with you and I appreciate your time in exploring my work. 😊
 
-Follow This Link To View The Deployed Website On Heroku:
-https://dotan-veretzky.herokuapp.com/
+## 🎯 Project Achievements
 
+1. 🧑‍💻 Gained hands-on experience with ![JavaScript](https://img.shields.io/badge/-JavaScript-black?style=flat&logo=javascript), ![HTML](https://img.shields.io/badge/-HTML5-E34F26?style=flat&logo=html5&logoColor=white), ![CSS](https://img.shields.io/badge/-CSS3-1572B6?style=flat&logo=css3) and ![Bootstrap](https://img.shields.io/badge/-Bootstrap-563D7C?style=flat&logo=bootstrap).
+2. 🌐 Developed a functional personal website.
+3. 📚 Learned how to manage and maintain a ![GitHub](https://img.shields.io/badge/-GitHub-181717?style=flat&logo=github) repository.
+4. 🔄 Navigated the deprecation of ![Heroku](https://img.shields.io/badge/-Heroku-430098?style=flat&logo=heroku) free resources on November 28, 2022, and successfully transitioned to ![Netlify](https://img.shields.io/badge/-Netlify-00C7B7?style=flat&logo=netlify) for hosting and deployment services.
+5. 💡 Implemented a SaaS product, "ProveSource", to enhance engagement with recruiters and visitors during my job search period.
 
-Directory Structure
--------------------
-css\              - Stylesheets CSS files for the website.
-images\           - Images used in the website.
-scripts\          - JavaScript used in the website.
-favicon.ico       - Favicon placeholder I made for the website.
-index.html        - Main HTML page to open the website in browser.
+You can view the deployed website on Netlify via this link: [🔗 My Website](https://dotanv.netlify.app/)
+
+## 📂 Project Directory Structure
+
+- `css\` - 🎨 Contains the CSS stylesheets for the website.
+- `images\` - 🖼️ Houses the images used in the website.
+- `scripts\` - 📜 Stores the JavaScript files used in the website.
+- `favicon.ico` - 🌐 A custom favicon I created for the website.
+- `index.html` - 📄 The main HTML page to open the website in a browser.
+
+Thank you for your interest in my project! 🙏
