@@ -10,6 +10,10 @@ Welcome to my first web development project! I'm thrilled to share this journey 
 4. 🔄 Navigated the deprecation of ![Heroku](https://img.shields.io/badge/-Heroku-430098?style=flat&logo=heroku) free resources on November 28, 2022, and successfully transitioned to ![Netlify](https://img.shields.io/badge/-Netlify-00C7B7?style=flat&logo=netlify) for hosting and deployment services.
 5. 💡 Implemented a SaaS product, "ProveSource", to enhance engagement with recruiters and visitors during my job search period.
 
+## 🚀 Deployment
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/67cdc9dd-3c61-4092-9b7d-74eead7e4f76/deploy-status)](https://app.netlify.com/sites/dotanv/deploys)
+
 You can view the deployed website on Netlify via this link: [🔗 My Website](https://dotanv.netlify.app/)
 
 ## 📂 Project Directory Structure
