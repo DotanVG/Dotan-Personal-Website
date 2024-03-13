@@ -269,3 +269,17 @@ footer a:not(.nav-link) {
 .entry-title a {
   text-decoration: none;
 }
+
+.exp-edu-img {
+  width: 100px; 
+  height: 100px; 
+  object-fit: cover; 
+  border-radius: 50%; 
+  border: 2px solid #000; 
+}
+
+.k-yam-img {
+  width: 100px; 
+  height: 100px; 
+  object-fit: fill
+}
