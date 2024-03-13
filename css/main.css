@@ -285,11 +285,16 @@ footer a:not(.nav-link) {
 }
 
 .tech-stack img {
-  margin: 5px; /* Adjust spacing around badges */
-  vertical-align: middle; /* Align badges vertically */
+  margin: 5px; 
+  vertical-align: middle; 
 }
 
-.tech-stack h4 {
+.tech-stack h3 {
   margin-top: 20px;
-  color: #333; /* Or any color that matches your site's theme */
+  color: #333; 
+}
+
+.tech-stack-h3 {
+  margin-top: 20px;
+  color: #333; 
 }
