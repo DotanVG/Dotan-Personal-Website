@@ -283,3 +283,13 @@ footer a:not(.nav-link) {
   height: 100px; 
   object-fit: fill
 }
+
+.tech-stack img {
+  margin: 5px; /* Adjust spacing around badges */
+  vertical-align: middle; /* Align badges vertically */
+}
+
+.tech-stack h4 {
+  margin-top: 20px;
+  color: #333; /* Or any color that matches your site's theme */
+}
