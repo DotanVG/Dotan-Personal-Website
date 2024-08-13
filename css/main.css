@@ -46,7 +46,8 @@ html {
 
 .social-nav .nav-link {
   padding: 0 0.5rem;
-  font-size: 1.1rem;
+  margin-right: 0.5rem;
+  font-size: 3.1rem;
   line-height: 2.5rem;
 }
 
