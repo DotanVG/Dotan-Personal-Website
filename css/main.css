@@ -23,6 +23,12 @@ html {
  */
 .section {
   scroll-margin-top: 2rem;
+  transition: all 0.3s ease;
+}
+.section:hover {
+  background-color: #e8f4fe; /* a light blue highlight */
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Header */
@@ -302,4 +308,15 @@ footer a:not(.nav-link) {
 
 .bg-custom-blue{
   background-color:#5091c9;
+}
+
+/* Experience and Education Card hover effect */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
+}
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(80, 145, 201, 0.4);
+  border-color: #5091c9;
 }
