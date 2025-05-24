@@ -17,6 +17,7 @@
     <link href="./css/bootstrap.min.css?ver=1.2.0" rel="stylesheet">
     <link href="./css/aos.css?ver=1.2.0" rel="stylesheet">
     <link href="./css/main.css?ver=1.2.0" rel="stylesheet">
+    <link href="./css/dark-mode.css?ver=1.2.0" rel="stylesheet">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -37,6 +38,7 @@
     <script src="./scripts/bootstrap.bundle.min.js" defer></script>
     <script src="./scripts/aos.min.js" defer></script>
     <script src="./scripts/main.js" defer></script>
+    <script src="./js/theme-switcher.js" defer></script>
     
     <!-- Start of Async ProveSource Code --><script>!function(o,i){window.provesrc&&window.console&&console.error&&console.error("ProveSource is included twice in this page."),provesrc=window.provesrc={dq:[],display:function(){this.dq.push(arguments)}},o._provesrcAsyncInit=function(){provesrc.init({apiKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2MmNhZDNlMWMyOGRjYjYzZDY0ZDEyYjMiLCJpYXQiOjE2NTc0NTk2ODF9.ANrAwRNxOGnHpka90mJ7jybFpTVFgv248OOxUoZDpYA",v:"0.0.4"})};var r=i.createElement("script");r.type="text/javascript",r.async=!0,r["ch"+"ar"+"set"]="UTF-8",r.src="https://cdn.provesrc.com/provesrc.js";var e=i.getElementsByTagName("script")[0];e.parentNode.insertBefore(r,e)}(window,document);</script><!-- End of Async ProveSource Code -->
     
@@ -52,6 +54,12 @@
               <li class="nav-item"><a class="nav-link" href="#experience">Experience</a></li>
               <li class="nav-item"><a class="nav-link" href="#education">Education</a></li>
               <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+              <li class="nav-item ms-lg-auto"> <!-- New Theme Toggle Button -->
+                <button id="theme-toggle-button" class="btn btn-outline-secondary btn-sm" type="button" title="Toggle theme">
+                  <i class="fas fa-sun" id="theme-toggle-sun-icon"></i>
+                  <i class="fas fa-moon d-none" id="theme-toggle-moon-icon"></i>
+                </button>
+              </li>
             </ul>
           </div>
         </div>
