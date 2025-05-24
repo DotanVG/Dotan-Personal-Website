@@ -192,3 +192,20 @@ body.dark-mode #theme-toggle-button:focus {
     color: #ffffff !important;
     border-color: #ffffff !important;
 }
+
+/* Add this new rule to css/dark-mode.css */
+body.dark-mode nav#header-nav.fixed-top {
+  background-color: #1f1f1f !important; /* Ensure dark background */
+  /* If text/link colors are also affected, ensure they are covered too.
+     However, existing rules like body.dark-mode .navbar-light .navbar-nav .nav-link should still apply.
+     This rule primarily focuses on reinforcing the background color. */
+}
+
+/* It might also be good to ensure the shadow from shadow-sm is adjusted for dark mode if it looks too stark.
+   Bootstrap's shadow-sm uses a fairly dark shadow: box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+   For dark mode, a lighter shadow might be more appropriate, or a darker one if the default isn't visible.
+   Let's try to make it a bit more visible on a very dark background.
+*/
+body.dark-mode nav#header-nav.shadow-sm {
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3) !important; /* A slightly more pronounced shadow for dark bg */
+}
