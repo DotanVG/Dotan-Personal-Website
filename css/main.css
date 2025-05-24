@@ -320,3 +320,35 @@ footer a:not(.nav-link) {
   box-shadow: 0 6px 20px rgba(80, 145, 201, 0.4);
   border-color: #5091c9;
 }
+
+/* Smooth transitions for theme changes */
+body, 
+.card, 
+.section, 
+.bg-light,
+.bg-custom-blue,
+.hobbies-item figcaption,
+.form-control {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+a, .nav-link {
+    transition: color 0.3s ease;
+}
+
+.btn {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Style for the theme toggle button icons (base styles, if needed beyond Bootstrap) */
+#theme-toggle-sun-icon,
+#theme-toggle-moon-icon {
+  /* Transitions will be handled by JS d-none for now, but good to have if d-none is replaced */
+  /* transition: opacity 0.3s ease, transform 0.3s ease; */
+}
+
+/* Basic styling for the toggle button if needed */
+#theme-toggle-button {
+    /* Default Bootstrap btn-sm and btn-outline-secondary should be okay. */
+    /* Add specific overrides here if necessary in light mode */
+}

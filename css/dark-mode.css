@@ -1,0 +1,211 @@
+body.dark-mode {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Override Bootstrap's .bg-light for the header */
+body.dark-mode .bg-light {
+  background-color: #1f1f1f !important;
+}
+
+/* Ensure navbar text is light */
+body.dark-mode .navbar-light .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+body.dark-mode .navbar-light .navbar-nav .nav-link:hover,
+body.dark-mode .navbar-light .navbar-nav .nav-link:focus,
+body.dark-mode .navbar-light .navbar-nav .active .nav-link {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+body.dark-mode .navbar-light .navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Cards */
+body.dark-mode .card {
+  background-color: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode .card .card-header {
+  background-color: #333 !important;
+  border-bottom: 1px solid #444 !important;
+}
+body.dark-mode .card h3, 
+body.dark-mode .card h5, 
+body.dark-mode .card p, 
+body.dark-mode .card li, 
+body.dark-mode .card .text-muted {
+  color: #e0e0e0 !important;
+}
+body.dark-mode .card .text-muted small {
+    color: #b0b0b0 !important;
+}
+
+/* Buttons */
+body.dark-mode .btn-primary {
+  background-color: #0056b3 !important;
+  border-color: #004085 !important;
+  color: #ffffff !important;
+}
+body.dark-mode .btn-secondary {
+  background-color: #495057 !important;
+  border-color: #343a40 !important;
+  color: #ffffff !important;
+}
+
+/* Custom background .bg-custom-blue */
+body.dark-mode .bg-custom-blue {
+  background-color: #2c3e50 !important;
+}
+
+/* General link colors */
+body.dark-mode a {
+  color: #6cb2eb !important;
+}
+body.dark-mode a:hover {
+  color: #8ec9f2 !important;
+}
+
+/* Specific overrides for sections if needed */
+body.dark-mode .section {
+  background-color: transparent;
+}
+body.dark-mode .section:hover {
+  background-color: #252525 !important;
+  transform: scale(1.02); 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Footer */
+body.dark-mode footer.bg-custom-blue {
+  background-color: #1c2833 !important;
+  color: #bdc3c7 !important;
+}
+body.dark-mode footer.bg-custom-blue .nav-link, 
+body.dark-mode footer.bg-custom-blue .h4, 
+body.dark-mode footer.bg-custom-blue p {
+  color: #bdc3c7 !important;
+}
+body.dark-mode footer.bg-custom-blue .nav-link:hover {
+  color: #ffffff !important;
+}
+body.dark-mode footer .text-secondary {
+    color: #95a5a6 !important;
+}
+
+/* Contact form adjustments */
+body.dark-mode .form-control {
+    background-color: #2c3e50 !important;
+    color: #e0e0e0 !important;
+    border-color: #4a6075 !important;
+}
+body.dark-mode .form-control::placeholder {
+    color: #a0b0c0 !important;
+}
+body.dark-mode .form-label {
+    color: #e0e0e0 !important;
+}
+
+/* Ensure text on .bg-light (which is now dark) is light */
+body.dark-mode .bg-light .site-title, 
+body.dark-mode .bg-light .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+body.dark-mode .bg-light .nav-link:hover, 
+body.dark-mode .bg-light .nav-link:focus, 
+body.dark-mode .bg-light .active .nav-link {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+body.dark-mode .bg-light .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+/* Experience/Education images border */
+body.dark-mode .exp-edu-img {
+  border: 2px solid #e0e0e0 !important;
+}
+
+/* Marker effect */
+body.dark-mode .marker:after {
+  /* No changes needed if SVG or CSS marker adapts or isn't critical */
+}
+
+/* Hobbies item caption */
+body.dark-mode .hobbies-item figcaption {
+  background: rgba(30, 30, 30, 0.85) !important;
+}
+body.dark-mode .hobbies-item figcaption h4 {
+  color: #f0f0f0 !important;
+}
+body.dark-mode .hobbies-item figcaption p {
+  color: #d0d0d0 !important;
+}
+
+/* Scrolltop button */
+body.dark-mode #scrolltop .btn {
+    background-color: #333 !important;
+    color: #fff !important;
+}
+
+/* Ensure any direct text color styling is overridden */
+body.dark-mode .text-dark {
+    color: #e0e0e0 !important;
+}
+body.dark-mode .text-body {
+     color: #e0e0e0 !important;
+}
+body.dark-mode .text-black-50 {
+    color: rgba(224, 224, 224, 0.5) !important;
+}
+body.dark-mode .text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Ensure intro title and lead text are light */
+body.dark-mode .intro-title, 
+body.dark-mode .lead {
+    color: #f5f5f5 !important;
+}
+body.dark-mode .social-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+body.dark-mode .social-nav .nav-link:hover {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Ensure that the text color for elements with class .fw-bolder is also light */
+body.dark-mode .fw-bolder {
+    color: #f5f5f5 !important;
+}
+
+/* Style the toggle button in dark mode - it's btn-outline-secondary */
+/* It should largely adapt, but we can ensure its colors are right in dark mode */
+body.dark-mode #theme-toggle-button {
+    color: #e0e0e0 !important; /* Light icon/text color */
+    border-color: #e0e0e0 !important; /* Light border color */
+    background-color: transparent !important; /* Ensure it's truly outline */
+}
+body.dark-mode #theme-toggle-button:hover,
+body.dark-mode #theme-toggle-button:focus {
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Slight background on hover */
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+}
+
+/* Add this new rule to css/dark-mode.css */
+body.dark-mode nav#header-nav.fixed-top {
+  background-color: #1f1f1f !important; /* Ensure dark background */
+  /* If text/link colors are also affected, ensure they are covered too.
+     However, existing rules like body.dark-mode .navbar-light .navbar-nav .nav-link should still apply.
+     This rule primarily focuses on reinforcing the background color. */
+}
+
+/* It might also be good to ensure the shadow from shadow-sm is adjusted for dark mode if it looks too stark.
+   Bootstrap's shadow-sm uses a fairly dark shadow: box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+   For dark mode, a lighter shadow might be more appropriate, or a darker one if the default isn't visible.
+   Let's try to make it a bit more visible on a very dark background.
+*/
+body.dark-mode nav#header-nav.shadow-sm {
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3) !important; /* A slightly more pronounced shadow for dark bg */
+}
