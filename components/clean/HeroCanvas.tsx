@@ -37,7 +37,6 @@ function HeroBlob({ scrollRef }: { scrollRef: React.RefObject<number> }) {
     targetRot.current.set(pointer.x * 0.5, pointer.y * 0.4);
     damp(mesh.rotation, "x", -targetRot.current.y, 0.4, dt);
     damp(mesh.rotation, "y", targetRot.current.x, 0.4, dt);
-
     mesh.rotation.z += dt * 0.05;
 
     const t = performance.now() * 0.00045;
@@ -47,7 +46,7 @@ function HeroBlob({ scrollRef }: { scrollRef: React.RefObject<number> }) {
       basePositions.current = new Float32Array(pos.array);
     }
     const base = basePositions.current;
-    const amp = 0.18;
+    const amp = 0.14;
     for (let i = 0; i < pos.count; i++) {
       const ix = i * 3;
       const x = base[ix];
@@ -72,7 +71,7 @@ function HeroBlob({ scrollRef }: { scrollRef: React.RefObject<number> }) {
 
   return (
     <Float speed={0.6} rotationIntensity={0.2} floatIntensity={0.6}>
-      <Icosahedron args={[1.4, 8]} ref={meshRef}>
+      <Icosahedron args={[1.1, 8]} ref={meshRef}>
         <MeshTransmissionMaterial
           transmission={1}
           thickness={1.4}
@@ -98,7 +97,7 @@ export default function HeroCanvas() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 4.5], fov: 35 }}
+      camera={{ position: [0, 0, 7], fov: 32 }}
       gl={{ antialias: true, alpha: true }}
       style={{ background: "transparent" }}
     >

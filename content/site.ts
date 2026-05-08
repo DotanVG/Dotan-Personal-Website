@@ -3,7 +3,12 @@ import type { SiteConfig } from "@/types";
 export const site: SiteConfig = {
   name: "Dotan",
   fullName: "Dotan Veretzky",
-  roles: ["Software Engineer", "Indie Game Developer"],
+  roles: [
+    "Software Engineer",
+    "Game Dev Enthusiast",
+    "Electronics Practical Engineer",
+    "Always building, always learning.",
+  ],
   tagline: "Software Engineer & Indie Game Developer",
   bio: [
     "I am passionate about software. A full-stack developer with a deep grounding in computers and electronics, plus rich experience across low-voltage systems, networks, communications and tutoring.",
