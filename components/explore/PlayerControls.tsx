@@ -66,7 +66,7 @@ export function PlayerControls() {
   }, []);
 
   useFrame((_, dt) => {
-    const speed = (explore.running ? 9 : 5) * dt;
+    const speed = (explore.running ? 9 : 5) * Math.min(dt, 0.05);
     const axis = getCombinedAxis();
     const len = Math.hypot(axis.x, axis.y);
     if (len > 0.05) {

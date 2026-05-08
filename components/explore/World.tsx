@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Environment, ContactShadows, Sky } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 
 const ISLAND_RADIUS = 40;
@@ -10,8 +10,8 @@ export function World() {
   const trees = useMemo(() => {
     const arr: { pos: [number, number, number]; scale: number; hue: number }[] = [];
     const seed = (i: number) => Math.sin(i * 1234.567) * 0.5 + 0.5;
-    for (let i = 0; i < 40; i++) {
-      const a = (i / 40) * Math.PI * 2 + seed(i) * 0.4;
+    for (let i = 0; i < 32; i++) {
+      const a = (i / 32) * Math.PI * 2 + seed(i) * 0.4;
       const r = 28 + seed(i + 7) * 9;
       arr.push({
         pos: [Math.cos(a) * r, 0, Math.sin(a) * r],
@@ -25,8 +25,8 @@ export function World() {
   const rocks = useMemo(() => {
     const arr: { pos: [number, number, number]; scale: number }[] = [];
     const seed = (i: number) => Math.sin(i * 999.13) * 0.5 + 0.5;
-    for (let i = 0; i < 18; i++) {
-      const a = (i / 18) * Math.PI * 2 + seed(i + 5);
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * Math.PI * 2 + seed(i + 5);
       const r = 32 + seed(i + 17) * 6;
       arr.push({
         pos: [Math.cos(a) * r, 0, Math.sin(a) * r],
@@ -38,16 +38,18 @@ export function World() {
 
   return (
     <>
-      <Sky sunPosition={[5, 8, -10]} turbidity={2} rayleigh={1.4} mieCoefficient={0.005} mieDirectionalG={0.7} />
-      <Environment preset="sunset" />
-      <hemisphereLight args={["#fde68a", "#1e293b", 0.55]} />
+      <color attach="background" args={["#0b1428"]} />
+      <hemisphereLight args={["#fde68a", "#1e293b", 0.7]} />
+      <ambientLight intensity={0.35} />
       <directionalLight
         position={[8, 14, 6]}
-        intensity={1.4}
+        intensity={1.6}
+        color="#fff5d6"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
+      <directionalLight position={[-6, 6, -8]} intensity={0.4} color="#a78bfa" />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[ISLAND_RADIUS, 96]} />
@@ -56,17 +58,28 @@ export function World() {
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <ringGeometry args={[ISLAND_RADIUS - 1, ISLAND_RADIUS, 96]} />
-        <meshStandardMaterial color="#a78bfa" roughness={0.6} emissive="#7c3aed" emissiveIntensity={0.25} />
+        <meshStandardMaterial
+          color="#a78bfa"
+          roughness={0.6}
+          emissive="#7c3aed"
+          emissiveIntensity={0.25}
+        />
       </mesh>
 
       <Path />
 
-      <mesh position={[-ISLAND_RADIUS - 2, -0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[400, 64]} />
-        <meshStandardMaterial color="#0f172a" roughness={1} />
+        <meshStandardMaterial color="#0a1224" roughness={1} />
       </mesh>
 
-      <ContactShadows position={[0, 0.01, 0]} opacity={0.45} scale={ISLAND_RADIUS * 2} blur={2.4} far={20} />
+      <ContactShadows
+        position={[0, 0.01, 0]}
+        opacity={0.45}
+        scale={ISLAND_RADIUS * 2}
+        blur={2.4}
+        far={20}
+      />
 
       {trees.map((t, i) => (
         <Tree key={`t${i}`} position={t.pos} scale={t.scale} hue={t.hue} />
@@ -80,7 +93,15 @@ export function World() {
   );
 }
 
-function Tree({ position, scale, hue }: { position: [number, number, number]; scale: number; hue: number }) {
+function Tree({
+  position,
+  scale,
+  hue,
+}: {
+  position: [number, number, number];
+  scale: number;
+  hue: number;
+}) {
   const color = new THREE.Color().setHSL(hue, 0.5, 0.4).getStyle();
   return (
     <group position={position} scale={scale}>
@@ -100,9 +121,19 @@ function Tree({ position, scale, hue }: { position: [number, number, number]; sc
   );
 }
 
-function Rock({ position, scale }: { position: [number, number, number]; scale: number }) {
+function Rock({
+  position,
+  scale,
+}: {
+  position: [number, number, number];
+  scale: number;
+}) {
   return (
-    <mesh position={[position[0], 0.2 * scale, position[2]]} scale={scale} castShadow>
+    <mesh
+      position={[position[0], 0.2 * scale, position[2]]}
+      scale={scale}
+      castShadow
+    >
       <dodecahedronGeometry args={[0.6, 0]} />
       <meshStandardMaterial color="#6b7280" roughness={0.95} flatShading />
     </mesh>
@@ -136,7 +167,12 @@ function CenterStatue() {
       </mesh>
       <mesh position={[0, 1.2, 0]} castShadow>
         <icosahedronGeometry args={[0.7, 0]} />
-        <meshStandardMaterial color="#a78bfa" emissive="#7c3aed" emissiveIntensity={0.4} flatShading />
+        <meshStandardMaterial
+          color="#a78bfa"
+          emissive="#7c3aed"
+          emissiveIntensity={0.4}
+          flatShading
+        />
       </mesh>
     </group>
   );
