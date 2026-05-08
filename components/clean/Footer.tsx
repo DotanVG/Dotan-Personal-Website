@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { site } from "@/content/site";
 
+const socials = [
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/dotan-v/" },
+  { label: "GitHub", href: "https://github.com/DotanVG" },
+  { label: "WhatsApp", href: "https://api.whatsapp.com/send?phone=972547792350" },
+];
+
 export function Footer() {
   return (
     <footer className="border-t border-line bg-canvas-inset">
@@ -12,35 +18,38 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink/70">
-          <Link
-            href={site.social.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-ink hover:underline"
-          >
-            LinkedIn
-          </Link>
-          <Link
-            href={site.social.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-ink hover:underline"
-          >
-            GitHub
-          </Link>
-          <Link
-            href={site.social.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-ink hover:underline"
-          >
-            WhatsApp
-          </Link>
+          {socials.map((s) => (
+            <Link
+              key={s.label}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center"
+            >
+              <span className="transition-colors duration-300 group-hover:text-ink">
+                {s.label}
+              </span>
+              <span
+                aria-hidden
+                className="ml-1 inline-block translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100"
+              >
+                ↗
+              </span>
+              <span
+                aria-hidden
+                className="absolute -bottom-1 left-0 h-px w-0 bg-ink transition-all duration-500 group-hover:w-full"
+              />
+            </Link>
+          ))}
           <Link
             href="?mode=explore"
-            className="rounded-full border border-line px-3 py-1 text-xs uppercase tracking-[0.2em] hover:border-ink/60 hover:text-ink"
+            className="group relative overflow-hidden rounded-full border border-line px-3 py-1 text-xs uppercase tracking-[0.2em] transition-all duration-500 hover:border-ink/60 hover:text-ink"
           >
-            Switch to Explore →
+            <span
+              aria-hidden
+              className="absolute inset-0 -translate-x-full bg-ink/10 transition-transform duration-500 group-hover:translate-x-0"
+            />
+            <span className="relative">Switch to Explore →</span>
           </Link>
         </div>
       </div>

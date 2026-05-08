@@ -29,19 +29,28 @@ export function ContactForm() {
       });
       if (!res.ok) throw new Error(`Formspree responded ${res.status}`);
       setStatus("success");
-      trackEvent("contact_form_submit", { ok: true });
+      trackEvent("contact_form_submit_success");
       form.reset();
     } catch (err) {
       setStatus("error");
       setError(
         err instanceof Error ? err.message : "Something went wrong. Try again.",
       );
-      trackEvent("contact_form_submit", { ok: false });
+      trackEvent("contact_form_submit_error");
     }
   }
 
   return (
-    <div className="rounded-3xl border border-line bg-canvas-raised/60 p-6 md:p-8">
+    <div className="group relative overflow-hidden rounded-3xl border border-line bg-canvas-raised/60 p-6 transition-all duration-700 hover:border-ink/20 md:p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(80% 60% at 0% 0%, rgb(var(--accent-glow) / 0.10), transparent 60%)",
+        }}
+      />
+
       <AnimatePresence mode="wait">
         {status === "success" ? (
           <motion.div
@@ -49,7 +58,7 @@ export function ContactForm() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-start gap-3 py-8"
+            className="relative flex flex-col items-start gap-3 py-8"
           >
             <span aria-hidden className="text-3xl">
               ✦
@@ -83,7 +92,7 @@ export function ContactForm() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onSubmit={onSubmit}
-            className="flex flex-col gap-4"
+            className="relative flex flex-col gap-4"
             noValidate
           >
             <Field label="Name" htmlFor="name">
@@ -94,6 +103,7 @@ export function ContactForm() {
                 required
                 autoComplete="name"
                 className="input"
+                placeholder="Your name"
               />
             </Field>
             <Field label="Email" htmlFor="email">
@@ -104,6 +114,7 @@ export function ContactForm() {
                 required
                 autoComplete="email"
                 className="input"
+                placeholder="you@example.com"
               />
             </Field>
             <Field label="Message" htmlFor="message">
@@ -113,6 +124,7 @@ export function ContactForm() {
                 rows={5}
                 required
                 className="input resize-y"
+                placeholder="Tell me what you're working on…"
               />
             </Field>
 
@@ -132,10 +144,18 @@ export function ContactForm() {
               <button
                 type="submit"
                 disabled={status === "submitting"}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-canvas transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                className="group/btn relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-canvas transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_-20px_rgb(var(--ink)_/_0.55)] disabled:opacity-50"
               >
-                {status === "submitting" ? "Sending…" : "Send message"}
-                <span aria-hidden>→</span>
+                <span
+                  aria-hidden
+                  className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover/btn:translate-x-full"
+                />
+                <span className="relative">
+                  {status === "submitting" ? "Sending…" : "Send message"}
+                </span>
+                <span aria-hidden className="relative transition-transform duration-300 group-hover/btn:translate-x-1">
+                  →
+                </span>
               </button>
             </div>
 
@@ -153,16 +173,25 @@ export function ContactForm() {
           width: 100%;
           background: rgb(var(--canvas));
           border: 1px solid rgb(var(--line));
-          border-radius: 12px;
-          padding: 0.75rem 1rem;
+          border-radius: 14px;
+          padding: 0.85rem 1.05rem;
           color: rgb(var(--ink));
           font: inherit;
-          transition: border-color 200ms ease, box-shadow 200ms ease;
+          transition: border-color 250ms ease, box-shadow 300ms ease,
+            transform 250ms ease, background-color 250ms ease;
+        }
+        :global(.input:hover) {
+          border-color: rgb(var(--ink) / 0.35);
         }
         :global(.input:focus) {
           outline: none;
-          border-color: rgb(var(--ink) / 0.6);
-          box-shadow: 0 0 0 4px rgb(var(--ink) / 0.06);
+          border-color: rgb(var(--ink) / 0.7);
+          background-color: rgb(var(--canvas-raised));
+          box-shadow: 0 0 0 4px rgb(var(--ink) / 0.07),
+            0 12px 30px -20px rgb(var(--ink) / 0.5);
+        }
+        :global(.input::placeholder) {
+          color: rgb(var(--ink) / 0.3);
         }
       `}</style>
     </div>
@@ -179,8 +208,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label htmlFor={htmlFor} className="flex flex-col gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60">
+    <label htmlFor={htmlFor} className="group/field flex flex-col gap-2">
+      <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60 transition-colors duration-300 group-focus-within/field:text-ink">
         {label}
       </span>
       {children}
