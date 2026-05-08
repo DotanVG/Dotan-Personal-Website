@@ -5,6 +5,9 @@ import { useRef } from "react";
 import * as THREE from "three";
 import { explore } from "@/lib/explore";
 
+const CAM_DIST = 10;
+const CAM_HEIGHT = 5.2;
+
 export function CameraRig() {
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3());
@@ -16,11 +19,11 @@ export function CameraRig() {
       explore.position.z,
     );
 
-    const desiredX = explore.position.x;
-    const desiredY = explore.position.y + 5.2;
-    const desiredZ = explore.position.z + 8;
+    const desiredX = explore.position.x + Math.sin(explore.cameraAngle) * CAM_DIST;
+    const desiredY = explore.position.y + CAM_HEIGHT;
+    const desiredZ = explore.position.z + Math.cos(explore.cameraAngle) * CAM_DIST;
 
-    const k = 4;
+    const k = 6;
     camera.position.x = THREE.MathUtils.damp(camera.position.x, desiredX, k, dt);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, desiredY, k, dt);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, desiredZ, k, dt);

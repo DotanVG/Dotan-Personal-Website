@@ -5,7 +5,8 @@ type Axis = { x: number; y: number };
 export const explore = {
   position: new Vector3(0, 0, 8),
   velocity: new Vector3(),
-  facing: 0,
+  facing: Math.PI,
+  cameraAngle: 0,
   keyAxis: { x: 0, y: 0 } as Axis,
   joyAxis: { x: 0, y: 0 } as Axis,
   running: false,
@@ -35,7 +36,8 @@ export function requestJump() {
 export function resetExplore() {
   explore.position.set(0, 0, 8);
   explore.velocity.set(0, 0, 0);
-  explore.facing = 0;
+  explore.facing = Math.PI;
+  explore.cameraAngle = 0;
   explore.keyAxis.x = 0;
   explore.keyAxis.y = 0;
   explore.joyAxis.x = 0;

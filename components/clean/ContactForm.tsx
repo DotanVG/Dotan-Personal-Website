@@ -65,7 +65,7 @@ export function ContactForm() {
             </span>
             <h3 className="font-display text-2xl font-medium">Message sent.</h3>
             <p className="text-ink/70">
-              Thanks for reaching out — I&apos;ll get back to you as soon as I
+              Thanks for reaching out, I&apos;ll get back to you as soon as I
               can. In a hurry?{" "}
               <a
                 href={site.social.whatsapp}

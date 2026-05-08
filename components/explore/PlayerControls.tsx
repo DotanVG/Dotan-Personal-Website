@@ -10,6 +10,7 @@ import {
 } from "@/lib/explore";
 
 const ISLAND_RADIUS = 38;
+const ROTATE_SPEED = 2.5;
 
 function clampToIsland(x: number, z: number): [number, number] {
   const r = Math.hypot(x, z);
@@ -66,15 +67,21 @@ export function PlayerControls() {
   }, []);
 
   useFrame((_, dt) => {
-    const speed = (explore.running ? 9 : 5) * Math.min(dt, 0.05);
+    const capped = Math.min(dt, 0.05);
+    const speed = (explore.running ? 9 : 5) * capped;
     const axis = getCombinedAxis();
-    const len = Math.hypot(axis.x, axis.y);
-    if (len > 0.05) {
-      const nx = axis.x / Math.max(1, len);
-      const ny = axis.y / Math.max(1, len);
-      explore.position.x += nx * speed;
-      explore.position.z += ny * speed;
-      explore.facing = Math.atan2(nx, ny);
+
+    // A/D: rotate the entire view (GTA-style)
+    if (Math.abs(axis.x) > 0.05) {
+      explore.cameraAngle += axis.x * ROTATE_SPEED * capped;
+    }
+
+    // W/S: move forward/backward in the direction the camera faces
+    if (Math.abs(axis.y) > 0.05) {
+      const fwd = -axis.y; // W = axis.y -1 → positive forward
+      explore.position.x += -Math.sin(explore.cameraAngle) * fwd * speed;
+      explore.position.z += -Math.cos(explore.cameraAngle) * fwd * speed;
+      explore.facing = explore.cameraAngle + Math.PI;
     }
 
     if (explore.jumpRequested) {

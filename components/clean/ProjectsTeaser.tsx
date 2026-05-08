@@ -14,7 +14,7 @@ export function ProjectsTeaser() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          04 — Indie Games
+          04 · Indie Games
         </p>
         <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
           The game studio is{" "}
@@ -24,7 +24,7 @@ export function ProjectsTeaser() {
         </h2>
         <p className="mt-6 max-w-prose text-lg text-ink/70">
           By day I ship payment integrations. By night I&apos;m building small
-          worlds. The first playable demo is on its way — drop me a line and
+          worlds. The first playable demo is on its way, drop me a line and
           I&apos;ll send you a key when it&apos;s ready.
         </p>
       </RevealOnScroll>

@@ -26,7 +26,7 @@ export function InfoPanel({
           <div className="flex items-center justify-between gap-3">
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/60">
               {marker.start}
-              {marker.start !== marker.end ? ` — ${marker.end}` : ""}
+              {marker.start !== marker.end ? ` - ${marker.end}` : ""}
               {marker.current ? " · Present" : ""}
             </div>
             <button

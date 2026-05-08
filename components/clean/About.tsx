@@ -17,7 +17,7 @@ export function About() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          01 — About
+          01 · About
         </p>
       </RevealOnScroll>
 
@@ -77,7 +77,7 @@ export function About() {
                     >
                       Zota
                     </a>{" "}
-                    — since Jan 2025
+                    , since Jan 2025
                   </>
                 }
               />

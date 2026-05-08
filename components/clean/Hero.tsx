@@ -56,7 +56,7 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60"
           >
-            Hello — I’m
+            Hello, I’m
           </motion.p>
 
           <motion.h1
@@ -101,7 +101,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.55 }}
             className="mt-8 max-w-xl text-pretty text-base text-ink/75 md:text-lg"
           >
-            A portfolio you can read — or walk through. Toggle to{" "}
+            A portfolio you can read or walk through. Toggle to{" "}
             <strong className="font-semibold text-ink">Explore</strong> mode and
             wander through every chapter of my career as a small 3D world.
           </motion.p>
