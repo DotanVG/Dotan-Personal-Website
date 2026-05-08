@@ -2,81 +2,83 @@
 
 import { useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { explore } from "@/lib/explore";
-import * as THREE from "three";
+import {
+  explore,
+  getCombinedAxis,
+  setKeyAxis,
+  requestJump,
+} from "@/lib/explore";
 
 const ISLAND_RADIUS = 38;
 
-function clampToIsland(pos: THREE.Vector3) {
-  const r = Math.hypot(pos.x, pos.z);
+function clampToIsland(x: number, z: number): [number, number] {
+  const r = Math.hypot(x, z);
   if (r > ISLAND_RADIUS) {
-    pos.x = (pos.x / r) * ISLAND_RADIUS;
-    pos.z = (pos.z / r) * ISLAND_RADIUS;
+    return [(x / r) * ISLAND_RADIUS, (z / r) * ISLAND_RADIUS];
   }
+  return [x, z];
 }
 
 export function PlayerControls() {
   useEffect(() => {
     const keys = new Set<string>();
 
-    function onKeyDown(e: KeyboardEvent) {
-      const k = e.key.toLowerCase();
-      keys.add(k);
-      if (k === "shift") explore.running = true;
-      if (k === " ") explore.jumpRequested = true;
-    }
-    function onKeyUp(e: KeyboardEvent) {
-      const k = e.key.toLowerCase();
-      keys.delete(k);
-      if (k === "shift") explore.running = false;
-    }
-
-    function tick() {
+    function recompute() {
       let kx = 0;
       let ky = 0;
       if (keys.has("w") || keys.has("arrowup")) ky -= 1;
       if (keys.has("s") || keys.has("arrowdown")) ky += 1;
       if (keys.has("a") || keys.has("arrowleft")) kx -= 1;
       if (keys.has("d") || keys.has("arrowright")) kx += 1;
+      setKeyAxis(kx, ky);
+    }
 
-      if (kx !== 0 || ky !== 0) {
-        explore.axis.x = kx;
-        explore.axis.y = ky;
-      } else if (
-        !document
-          .querySelector('[data-explore-joystick="active"]')
-          ?.hasAttribute("data-explore-joystick")
-      ) {
-        explore.axis.x = 0;
-        explore.axis.y = 0;
+    function onKeyDown(e: KeyboardEvent) {
+      const k = e.key.toLowerCase();
+      keys.add(k);
+      if (k === "shift") explore.running = true;
+      if (k === " ") {
+        e.preventDefault();
+        requestJump();
       }
+      recompute();
+    }
+    function onKeyUp(e: KeyboardEvent) {
+      const k = e.key.toLowerCase();
+      keys.delete(k);
+      if (k === "shift") explore.running = false;
+      recompute();
+    }
+    function onBlur() {
+      keys.clear();
+      explore.running = false;
+      recompute();
     }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    const id = window.setInterval(tick, 33);
+    window.addEventListener("blur", onBlur);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
-      window.clearInterval(id);
+      window.removeEventListener("blur", onBlur);
     };
   }, []);
 
   useFrame((_, dt) => {
     const speed = (explore.running ? 9 : 5) * dt;
-    const ax = explore.axis.x;
-    const ay = explore.axis.y;
-    const len = Math.hypot(ax, ay);
-    if (len > 0.01) {
-      const nx = ax / Math.max(1, len);
-      const ny = ay / Math.max(1, len);
+    const axis = getCombinedAxis();
+    const len = Math.hypot(axis.x, axis.y);
+    if (len > 0.05) {
+      const nx = axis.x / Math.max(1, len);
+      const ny = axis.y / Math.max(1, len);
       explore.position.x += nx * speed;
       explore.position.z += ny * speed;
       explore.facing = Math.atan2(nx, ny);
     }
 
     if (explore.jumpRequested) {
-      explore.velocity.y = 6;
+      if (explore.position.y <= 0.001) explore.velocity.y = 6;
       explore.jumpRequested = false;
     }
     explore.velocity.y -= 18 * dt;
@@ -86,7 +88,9 @@ export function PlayerControls() {
       explore.velocity.y = 0;
     }
 
-    clampToIsland(explore.position);
+    const [cx, cz] = clampToIsland(explore.position.x, explore.position.z);
+    explore.position.x = cx;
+    explore.position.z = cz;
   });
 
   return null;

@@ -2,9 +2,9 @@
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Billboard, Html, MeshDistortMaterial } from "@react-three/drei";
+import { Billboard, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { explore } from "@/lib/explore";
+import { explore, getCombinedAxis } from "@/lib/explore";
 
 export function Player() {
   const group = useRef<THREE.Group>(null);
@@ -16,11 +16,10 @@ export function Player() {
     if (!g) return;
     g.position.copy(explore.position);
 
-    const len = Math.hypot(explore.axis.x, explore.axis.y);
+    const axis = getCombinedAxis();
+    const len = Math.hypot(axis.x, axis.y);
     if (len > 0.05) bodyRotTarget.current = explore.facing;
-    const cur = g.rotation.y;
-    const next = THREE.MathUtils.damp(cur, bodyRotTarget.current, 8, dt);
-    g.rotation.y = next;
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, bodyRotTarget.current, 8, dt);
 
     if (head.current) {
       const t = performance.now() * 0.005;
@@ -29,15 +28,10 @@ export function Player() {
   });
 
   return (
-    <group ref={group} position={[0, 0, 6]}>
+    <group ref={group} position={[0, 0, 8]}>
       <mesh position={[0, 0.55, 0]} castShadow>
         <capsuleGeometry args={[0.32, 0.7, 6, 12]} />
-        <MeshDistortMaterial
-          color="#7c3aed"
-          roughness={0.5}
-          distort={0.12}
-          speed={0.6}
-        />
+        <meshStandardMaterial color="#7c3aed" roughness={0.5} metalness={0.05} />
       </mesh>
       <mesh ref={head} position={[0, 1.45, 0]} castShadow>
         <sphereGeometry args={[0.32, 24, 24]} />

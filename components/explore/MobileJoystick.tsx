@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { setExploreAxis, requestJump } from "@/lib/explore";
+import { setJoyAxis, requestJump } from "@/lib/explore";
+import { trackEvent } from "@/lib/analytics";
 
 export function MobileJoystick() {
   const [active, setActive] = useState(false);
@@ -10,9 +11,7 @@ export function MobileJoystick() {
   const center = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    return () => {
-      setExploreAxis(0, 0);
-    };
+    return () => setJoyAxis(0, 0);
   }, []);
 
   function start(clientX: number, clientY: number) {
@@ -36,7 +35,7 @@ export function MobileJoystick() {
     if (thumbRef.current) {
       thumbRef.current.style.transform = `translate(${cx}px, ${cy}px)`;
     }
-    setExploreAxis(cx / max, cy / max);
+    setJoyAxis(cx / max, cy / max);
   }
 
   function end() {
@@ -45,14 +44,18 @@ export function MobileJoystick() {
     if (thumbRef.current) {
       thumbRef.current.style.transform = "translate(0px, 0px)";
     }
-    setExploreAxis(0, 0);
+    setJoyAxis(0, 0);
+  }
+
+  function onJump() {
+    requestJump();
+    trackEvent("explore_jump", { source: "mobile" });
   }
 
   return (
     <>
       <div
         ref={baseRef}
-        data-explore-joystick={active ? "active" : ""}
         onTouchStart={(e) => {
           const t = e.touches[0];
           start(t.clientX, t.clientY);
@@ -68,7 +71,7 @@ export function MobileJoystick() {
       >
         <div
           ref={thumbRef}
-          className="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 shadow-lg transition-[opacity] duration-150"
+          className="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 shadow-lg"
           style={{ opacity: active ? 1 : 0.7 }}
         />
         <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-white/60">
@@ -80,11 +83,11 @@ export function MobileJoystick() {
         type="button"
         onTouchStart={(e) => {
           e.preventDefault();
-          requestJump();
+          onJump();
         }}
         onClick={(e) => {
           e.preventDefault();
-          requestJump();
+          onJump();
         }}
         className="pointer-events-auto fixed bottom-6 right-6 z-30 size-20 rounded-full border border-white/20 bg-black/35 font-mono text-xs uppercase tracking-[0.2em] text-white/85 backdrop-blur active:bg-white/20"
       >

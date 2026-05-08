@@ -17,7 +17,8 @@ import { experience } from "@/content/experience";
 import { education } from "@/content/education";
 import { useApp } from "@/lib/store";
 import { useIsMobile } from "@/lib/useIsMobile";
-import { explore } from "@/lib/explore";
+import { resetExplore } from "@/lib/explore";
+import { trackEvent } from "@/lib/analytics";
 
 function buildMarkers(): MarkerData[] {
   const expMarkers: MarkerData[] = experience.map((e, i) => ({
@@ -62,15 +63,15 @@ export default function ExploreScene() {
     : null;
 
   useEffect(() => {
-    explore.position.set(0, 0, 8);
-    explore.velocity.set(0, 0, 0);
-    explore.facing = 0;
+    resetExplore();
     setActiveMarker(null);
+    trackEvent("explore_enter");
 
     function onKey(e: KeyboardEvent) {
       const k = e.key.toLowerCase();
       if ((k === "e" || k === "escape") && useApp.getState().activeMarker) {
         setActiveMarker(null);
+        trackEvent("marker_close", { via: "keyboard" });
       }
     }
     window.addEventListener("keydown", onKey);
@@ -79,13 +80,13 @@ export default function ExploreScene() {
 
   return (
     <div className="fixed inset-0 z-10 bg-canvas-inset">
-      <Canvas
-        shadows
-        dpr={[1, isMobile ? 1.4 : 1.8]}
-        camera={{ position: [0, 6, 14], fov: isMobile ? 65 : 55, near: 0.1, far: 200 }}
-        gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
-      >
-        <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen />}>
+        <Canvas
+          shadows
+          dpr={[1, isMobile ? 1.4 : 1.8]}
+          camera={{ position: [0, 6, 14], fov: isMobile ? 65 : 55, near: 0.1, far: 200 }}
+          gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+        >
           <PerformanceMonitor onIncline={() => setDprFactor(1)} onDecline={() => setDprFactor(0.7)} />
           <AdaptiveDpr pixelated />
           <AdaptiveEvents />
@@ -98,17 +99,20 @@ export default function ExploreScene() {
               key={m.slug}
               data={m}
               active={activeMarker === m.slug}
-              onActivate={() => setActiveMarker(m.slug)}
+              onActivate={() => {
+                if (useApp.getState().activeMarker !== m.slug) {
+                  setActiveMarker(m.slug);
+                  trackEvent("marker_open", { slug: m.slug });
+                }
+              }}
               onDeactivate={() => {
                 if (useApp.getState().activeMarker === m.slug) setActiveMarker(null);
               }}
             />
           ))}
           <fog attach="fog" args={["#0f172a", 30 * dprFactor + 30, 110]} />
-        </Suspense>
-      </Canvas>
-
-      <Suspense fallback={<LoadingScreen />}>{null}</Suspense>
+        </Canvas>
+      </Suspense>
 
       <Instructions />
 
