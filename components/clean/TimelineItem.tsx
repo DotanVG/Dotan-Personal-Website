@@ -59,12 +59,6 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
             {item.start !== item.end ? ` - ${item.end}` : ""}
             {item.current ? " · Present" : ""}
           </div>
-          <span
-            aria-hidden
-            className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-ink/70"
-          >
-            0{idx + 1}
-          </span>
         </div>
 
         <motion.h3

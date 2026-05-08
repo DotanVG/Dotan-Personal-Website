@@ -20,7 +20,7 @@ import { resetExplore } from "@/lib/explore";
 import { trackEvent } from "@/lib/analytics";
 
 function buildMarkers(): MarkerData[] {
-  const expMarkers: MarkerData[] = experience.map((e, i) => ({
+  const expMarkers: MarkerData[] = experience.map((e) => ({
     slug: e.slug,
     title: e.role,
     subtitle: e.company,
@@ -32,9 +32,8 @@ function buildMarkers(): MarkerData[] {
     bullets: e.bullets,
     building: e.exploreBuilding ?? "block",
     position: e.position,
-    index: i,
   }));
-  const eduMarkers: MarkerData[] = education.map((e, i) => ({
+  const eduMarkers: MarkerData[] = education.map((e) => ({
     slug: e.slug,
     title: e.degree,
     subtitle: e.school,
@@ -45,7 +44,6 @@ function buildMarkers(): MarkerData[] {
     bullets: e.bullets,
     building: e.exploreBuilding ?? "block",
     position: e.position,
-    index: i + expMarkers.length,
   }));
   return [...expMarkers, ...eduMarkers];
 }

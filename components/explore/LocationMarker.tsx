@@ -19,7 +19,6 @@ export type MarkerData = {
   bullets: string[];
   building: ExploreBuildingType;
   position: [number, number];
-  index: number;
 };
 
 export function LocationMarker({
@@ -114,7 +113,7 @@ export function LocationMarker({
             whiteSpace: "nowrap",
           }}
         >
-          {String(data.index + 1).padStart(2, "0")} · {data.subtitle}
+          {data.subtitle}
         </Html>
       </Billboard>
     </group>
