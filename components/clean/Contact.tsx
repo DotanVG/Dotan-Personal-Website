@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { site } from "@/content/site";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
-import { EmailIcon, LinkedInIcon, GitHubIcon, WhatsAppIcon } from "@/components/ui/icons";
+import { EmailIcon, LinkedInIcon, GitHubIcon, ItchIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { ContactForm } from "./ContactForm";
 
 export function Contact() {
@@ -52,6 +52,13 @@ export function Contact() {
               icon={<GitHubIcon />}
               value="DotanVG"
               href={site.social.github}
+              external
+            />
+            <ContactRow
+              label="itch.io"
+              icon={<ItchIcon />}
+              value="dotanv.itch.io"
+              href={site.social.itch}
               external
             />
 

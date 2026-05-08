@@ -23,6 +23,7 @@ export const site: SiteConfig = {
   social: {
     linkedin: "https://www.linkedin.com/in/dotan-v/",
     github: "https://github.com/DotanVG",
+    itch: "https://dotanv.itch.io/",
     whatsapp: "https://api.whatsapp.com/send?phone=972547792350",
   },
   services: {

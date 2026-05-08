@@ -32,6 +32,14 @@ export function GitHubIcon({ className = "size-4" }: { className?: string }) {
   );
 }
 
+export function ItchIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M3.24 7.53c0-.73.6-1.33 1.33-1.33h1.29c.42 0 .81.2 1.06.55l1.17 1.61 1.43-1.91a1.32 1.32 0 0 1 2.12 0l1.43 1.91 1.17-1.61c.25-.35.64-.55 1.06-.55h1.29c.73 0 1.33.6 1.33 1.33v3.6c0 .19.15.34.34.34h.57c.73 0 1.33.6 1.33 1.33v2.39c0 .73-.6 1.33-1.33 1.33h-.57a.34.34 0 0 0-.34.34v.81c0 .73-.6 1.33-1.33 1.33H4.57c-.73 0-1.33-.6-1.33-1.33v-.81a.34.34 0 0 0-.34-.34h-.57c-.73 0-1.33-.6-1.33-1.33V12.8c0-.73.6-1.33 1.33-1.33h.57c.19 0 .34-.15.34-.34zm2.6 3.05a.82.82 0 0 0-.82.82v3.85c0 .45.37.82.82.82h12.32c.45 0 .82-.37.82-.82V11.4a.82.82 0 0 0-.82-.82h-.48c-.4 0-.77-.19-1.01-.51l-1.34-1.85-1.63 2.17a.82.82 0 0 1-1.31 0l-1.63-2.17-1.34 1.85a1.26 1.26 0 0 1-1.01.51z" />
+    </svg>
+  );
+}
+
 export function WhatsAppIcon({ className = "size-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>

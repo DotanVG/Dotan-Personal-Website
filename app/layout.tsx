@@ -86,7 +86,7 @@ const personJsonLd = {
   telephone: site.phone,
   url: site.url,
   jobTitle: site.tagline,
-  sameAs: [site.social.linkedin, site.social.github],
+  sameAs: [site.social.linkedin, site.social.github, site.social.itch],
 };
 
 export default function RootLayout({

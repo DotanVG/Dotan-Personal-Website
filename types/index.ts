@@ -13,6 +13,7 @@ export type SiteConfig = {
   social: {
     linkedin: string;
     github: string;
+    itch: string;
     whatsapp: string;
   };
   services: {

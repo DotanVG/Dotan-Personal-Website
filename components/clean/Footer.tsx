@@ -1,21 +1,26 @@
 import Link from "next/link";
 import { site } from "@/content/site";
-import { LinkedInIcon, GitHubIcon, WhatsAppIcon } from "@/components/ui/icons";
+import { LinkedInIcon, GitHubIcon, ItchIcon, WhatsAppIcon } from "@/components/ui/icons";
 
 const socials = [
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/dotan-v/",
+    href: site.social.linkedin,
     icon: <LinkedInIcon />,
   },
   {
     label: "GitHub",
-    href: "https://github.com/DotanVG",
+    href: site.social.github,
     icon: <GitHubIcon />,
   },
   {
+    label: "itch.io",
+    href: site.social.itch,
+    icon: <ItchIcon />,
+  },
+  {
     label: "WhatsApp",
-    href: "https://api.whatsapp.com/send?phone=972547792350",
+    href: site.social.whatsapp,
     icon: <WhatsAppIcon />,
   },
 ];
