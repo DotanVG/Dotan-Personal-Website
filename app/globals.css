@@ -33,6 +33,13 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Hide the native cursor on desktop — replaced by the custom Cursor component */
+  @media (min-width: 768px) {
+    *, *::before, *::after {
+      cursor: none !important;
+    }
+  }
+
   html,
   body {
     background-color: rgb(var(--canvas));

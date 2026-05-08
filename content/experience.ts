@@ -9,7 +9,7 @@ export const experience: Experience[] = [
     start: "2025",
     end: "Present",
     current: true,
-    logo: "/images/experience/zota.jpeg",
+    logo: "/images/experience/zota.png",
     blurb:
       "Building and hardening payment-gateway integrations for a global fintech, working across security, scale, and compliance.",
     bullets: [

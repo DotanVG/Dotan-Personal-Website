@@ -71,9 +71,9 @@ export function PlayerControls() {
     const speed = (explore.running ? 9 : 5) * capped;
     const axis = getCombinedAxis();
 
-    // A/D: rotate the entire view (GTA-style)
+    // A/D: rotate the entire view (GTA-style) — axis.x negated so A=left, D=right
     if (Math.abs(axis.x) > 0.05) {
-      explore.cameraAngle += axis.x * ROTATE_SPEED * capped;
+      explore.cameraAngle -= axis.x * ROTATE_SPEED * capped;
     }
 
     // W/S: move forward/backward in the direction the camera faces

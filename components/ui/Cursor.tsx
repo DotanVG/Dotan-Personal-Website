@@ -43,8 +43,22 @@ export function Cursor() {
       style={{ x: sx, y: sy }}
       className="pointer-events-none fixed left-0 top-0 z-[100] hidden md:block"
     >
+      {/* Outer ring — expands on hover */}
       <motion.div
-        animate={{ scale: active ? 2.4 : 1, opacity: active ? 0.6 : 0.85 }}
+        animate={{
+          scale: active ? 1 : 0,
+          opacity: active ? 0.5 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 350, damping: 26 }}
+        className="-translate-x-1/2 -translate-y-1/2 absolute rounded-full border border-ink mix-blend-difference"
+        style={{ width: 36, height: 36 }}
+      />
+      {/* Core dot — shrinks on hover */}
+      <motion.div
+        animate={{
+          scale: active ? 0.5 : 1,
+          opacity: active ? 0.5 : 0.85,
+        }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
         className="-translate-x-1/2 -translate-y-1/2 rounded-full bg-ink mix-blend-difference"
         style={{ width: 16, height: 16 }}
