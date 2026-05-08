@@ -1,10 +1,23 @@
 import Link from "next/link";
 import { site } from "@/content/site";
+import { LinkedInIcon, GitHubIcon, WhatsAppIcon } from "@/components/ui/icons";
 
 const socials = [
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/dotan-v/" },
-  { label: "GitHub", href: "https://github.com/DotanVG" },
-  { label: "WhatsApp", href: "https://api.whatsapp.com/send?phone=972547792350" },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/dotan-v/",
+    icon: <LinkedInIcon />,
+  },
+  {
+    label: "GitHub",
+    href: "https://github.com/DotanVG",
+    icon: <GitHubIcon />,
+  },
+  {
+    label: "WhatsApp",
+    href: "https://api.whatsapp.com/send?phone=972547792350",
+    icon: <WhatsAppIcon />,
+  },
 ];
 
 export function Footer() {
@@ -24,14 +37,17 @@ export function Footer() {
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex items-center"
+              className="group relative inline-flex items-center gap-2"
             >
+              <span className="shrink-0 text-ink/50 transition-colors duration-300 group-hover:text-ink">
+                {s.icon}
+              </span>
               <span className="transition-colors duration-300 group-hover:text-ink">
                 {s.label}
               </span>
               <span
                 aria-hidden
-                className="ml-1 inline-block translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100"
+                className="inline-block translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100"
               >
                 ↗
               </span>

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { site } from "@/content/site";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import { EmailIcon, LinkedInIcon, GitHubIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { ContactForm } from "./ContactForm";
 
 export function Contact() {
@@ -12,10 +13,10 @@ export function Contact() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          05 — Contact
+          05 · Contact
         </p>
         <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
-          Let&apos;s build{" "}
+          Let&apos;s build{"\ "}
           <span className="text-ink/40 transition-colors duration-700 hover:text-ink">
             something.
           </span>
@@ -33,20 +34,22 @@ export function Contact() {
 
         <RevealOnScroll delay={0.15} className="md:col-span-5">
           <div className="flex flex-col gap-2">
-            <ContactRow label="Email" value={site.email} href={`mailto:${site.email}`} />
             <ContactRow
-              label="Phone"
-              value={site.phone}
-              href={`tel:${site.phoneIntl}`}
+              label="Email"
+              icon={<EmailIcon />}
+              value={site.email}
+              href={`mailto:${site.email}`}
             />
             <ContactRow
               label="LinkedIn"
+              icon={<LinkedInIcon />}
               value="dotan-v"
               href={site.social.linkedin}
               external
             />
             <ContactRow
               label="GitHub"
+              icon={<GitHubIcon />}
               value="DotanVG"
               href={site.social.github}
               external
@@ -76,11 +79,12 @@ export function Contact() {
                 />
               </div>
               <div className="relative">
-                <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60">
+                <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60">
+                  <WhatsAppIcon className="size-3.5 text-emerald-500/70 transition-colors duration-300 group-hover:text-emerald-500" />
                   WhatsApp
                 </div>
                 <div className="mt-1 text-sm text-ink/80">
-                  Scan, or{" "}
+                  Scan, or{"\ "}
                   <span className="font-medium underline underline-offset-4 transition-colors group-hover:text-ink">
                     open a chat ↗
                   </span>
@@ -96,11 +100,13 @@ export function Contact() {
 
 function ContactRow({
   label,
+  icon,
   value,
   href,
   external,
 }: {
   label: string;
+  icon: React.ReactNode;
   value: string;
   href: string;
   external?: boolean;
@@ -110,17 +116,20 @@ function ContactRow({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="group relative flex items-baseline justify-between gap-4 overflow-hidden border-b border-line py-4 transition-all duration-500 hover:border-ink/40"
+      className="group relative flex items-center justify-between gap-4 overflow-hidden border-b border-line py-4 transition-all duration-500 hover:border-ink/40"
     >
       <span
         aria-hidden
         className="absolute inset-x-0 bottom-0 h-px scale-x-0 bg-ink transition-transform duration-500 group-hover:scale-x-100"
         style={{ transformOrigin: "0% 50%" }}
       />
-      <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60 transition-colors duration-300 group-hover:text-ink/90">
+      <span className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60 transition-colors duration-300 group-hover:text-ink/90">
+        <span className="shrink-0 transition-colors duration-300 group-hover:text-ink/70">
+          {icon}
+        </span>
         {label}
       </span>
-      <span className="relative inline-flex items-baseline gap-2 font-display text-base text-ink md:text-lg">
+      <span className="relative inline-flex items-center gap-2 font-display text-base text-ink md:text-lg">
         <span className="transition-transform duration-500 group-hover:-translate-x-1">
           {value}
         </span>

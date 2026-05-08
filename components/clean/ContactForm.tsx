@@ -61,12 +61,12 @@ export function ContactForm() {
             className="relative flex flex-col items-start gap-3 py-8"
           >
             <span aria-hidden className="text-3xl">
-              ✦
+              ❆
             </span>
             <h3 className="font-display text-2xl font-medium">Message sent.</h3>
             <p className="text-ink/70">
-              Thanks for reaching out — I&apos;ll get back to you as soon as I
-              can. In a hurry?{" "}
+              Thanks for reaching out, I&apos;ll get back to you as soon as I
+              can. In a hurry?{"\ "}
               <a
                 href={site.social.whatsapp}
                 target="_blank"
@@ -161,7 +161,7 @@ export function ContactForm() {
 
             {status === "error" && (
               <p role="alert" className="mt-1 text-sm text-red-500">
-                {error ?? "Couldn’t send. Try again, or email me directly."}
+                {error ?? "Couldn't send. Try again, or email me directly."}
               </p>
             )}
           </motion.form>

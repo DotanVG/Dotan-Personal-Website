@@ -17,7 +17,7 @@ export function About() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          01 — About
+          01 · About
         </p>
       </RevealOnScroll>
 
@@ -25,7 +25,7 @@ export function About() {
         <div className="md:col-span-7">
           <RevealOnScroll>
             <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance md:text-6xl">
-              I build software the way I make games:{" "}
+              I build software the way I make games:{"\ "}
               <span className="text-ink/40 transition-colors duration-700 hover:text-ink">
                 curious, deliberate, playful.
               </span>
@@ -68,7 +68,7 @@ export function About() {
                 label="Currently"
                 value={
                   <>
-                    Integration QA at{" "}
+                    Integration QA at{"\ "}
                     <a
                       href="https://zota.com/"
                       target="_blank"
@@ -76,8 +76,8 @@ export function About() {
                       className="font-medium hover:underline"
                     >
                       Zota
-                    </a>{" "}
-                    — since Jan 2025
+                    </a>{"\ "}
+                    , since Jan 2025
                   </>
                 }
               />

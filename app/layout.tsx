@@ -26,7 +26,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.fullName} — ${site.tagline}`,
+    default: `${site.fullName} | ${site.tagline}`,
     template: `%s · ${site.fullName}`,
   },
   description: `${site.fullName} is a Software Engineer and Indie Game Developer based in ${site.location}. Explore his career as a clean portfolio or as a walkable 3D world.`,
@@ -45,14 +45,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: site.url,
-    title: `${site.fullName} — ${site.tagline}`,
-    description: `${site.fullName} — ${site.tagline}. A portfolio you can read or walk through.`,
+    title: `${site.fullName} | ${site.tagline}`,
+    description: `${site.fullName} | ${site.tagline}. A portfolio you can read or walk through.`,
     siteName: site.fullName,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.fullName} — ${site.tagline}`,
-    description: `${site.fullName} — ${site.tagline}.`,
+    title: `${site.fullName} | ${site.tagline}`,
+    description: `${site.fullName} | ${site.tagline}.`,
   },
   manifest: "/site.webmanifest",
   icons: {
