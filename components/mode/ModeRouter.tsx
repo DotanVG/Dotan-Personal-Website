@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
-import { ExplorePlaceholder } from "@/components/explore/ExplorePlaceholder";
+import { LoadingScreen } from "@/components/explore/LoadingScreen";
+
+const ExploreScene = dynamic(() => import("@/components/explore/ExploreScene"), {
+  ssr: false,
+  loading: () => <LoadingScreen />,
+});
 
 export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   const mode = useApp((s) => s.mode);
@@ -52,7 +58,7 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <ExplorePlaceholder />
+          <ExploreScene />
         </motion.div>
       )}
     </AnimatePresence>
