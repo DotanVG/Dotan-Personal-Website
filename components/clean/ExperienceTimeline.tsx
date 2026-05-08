@@ -10,7 +10,7 @@ export function ExperienceTimeline() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          02 · Experience
+          Experience
         </p>
         <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
           Where I&apos;ve been shipping.

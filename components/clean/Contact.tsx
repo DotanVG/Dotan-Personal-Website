@@ -13,7 +13,7 @@ export function Contact() {
     >
       <RevealOnScroll>
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
-          05 · Contact
+          Contact
         </p>
         <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
           Let&apos;s build{"\ "}

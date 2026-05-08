@@ -30,14 +30,18 @@ export function ModeToggle({ className }: { className?: string }) {
 
   function setTo(next: "clean" | "explore") {
     if (next === mode) return;
-    setMode(next);
     trackEvent("mode_toggle", { to: next });
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      if (next === "explore") url.searchParams.set("mode", "explore");
-      else url.searchParams.delete("mode");
+      if (next === "explore") {
+        url.searchParams.set("mode", "explore");
+        window.location.assign(url.toString());
+        return;
+      }
+      url.searchParams.delete("mode");
       window.history.replaceState({}, "", url.toString());
     }
+    setMode(next);
   }
 
   function warm() {

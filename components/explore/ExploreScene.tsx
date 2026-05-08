@@ -2,7 +2,6 @@
 
 import { Canvas } from "@react-three/fiber";
 import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor } from "@react-three/drei";
-import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { World } from "./World";
 import { Player } from "./Player";
@@ -125,33 +124,18 @@ export default function ExploreScene() {
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              setMode("clean");
-              if (typeof window !== "undefined") {
-                const url = new URL(window.location.href);
-                url.searchParams.delete("mode");
-                window.history.replaceState({}, "", url.toString());
-              }
-            }}
+            onClick={() => window.location.assign("/")}
             className="rounded-full border border-white/15 bg-black/45 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-white/85 backdrop-blur hover:bg-black/60"
           >
             ← Clean view
           </button>
-          <Link
-            href="#contact"
-            scroll
-            onClick={() => {
-              setMode("clean");
-              if (typeof window !== "undefined") {
-                const url = new URL(window.location.href);
-                url.searchParams.delete("mode");
-                window.history.replaceState({}, "", url.toString());
-              }
-            }}
+          <button
+            type="button"
+            onClick={() => window.location.assign("/#contact")}
             className="rounded-full border border-yellow-300/30 bg-yellow-300/15 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-yellow-100 backdrop-blur hover:bg-yellow-300/25"
           >
-            Mailbox →
-          </Link>
+            Contact me →
+          </button>
         </div>
       </div>
 
