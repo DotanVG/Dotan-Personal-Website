@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --canvas: 245 245 245;
+    --canvas-raised: 255 255 255;
+    --canvas-inset: 235 235 235;
+    --ink: 10 10 10;
+    --ink-muted: 90 90 90;
+    --ink-subtle: 140 140 140;
+    --line: 220 220 220;
+    --accent: 16 16 16;
+    --accent-glow: 250 204 21;
+  }
+
+  .dark {
+    --canvas: 10 10 10;
+    --canvas-raised: 18 18 18;
+    --canvas-inset: 6 6 6;
+    --ink: 245 245 245;
+    --ink-muted: 165 165 165;
+    --ink-subtle: 110 110 110;
+    --line: 38 38 38;
+    --accent: 245 245 245;
+    --accent-glow: 250 204 21;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  html,
+  body {
+    background-color: rgb(var(--canvas));
+    color: rgb(var(--ink));
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: rgb(var(--accent-glow));
+    color: rgb(10 10 10);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent-glow));
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hidden {
+    scrollbar-width: none;
+  }
+
+  .marker-underline {
+    background-image: linear-gradient(120deg, rgb(var(--accent-glow) / 0.55) 0%, rgb(var(--accent-glow) / 0.55) 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 32%;
+    background-position: 0 88%;
+  }
+}
+
+.hero-headline {
+  font-feature-settings: "ss01";
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -1,27 +1,49 @@
-# 🚀 My First Web Development Project
+# Dotan Veretzky — Personal Website
 
-Welcome to my first web development project! I'm thrilled to share this journey with you and I appreciate your time in exploring my work. 😊
+A dual-mode personal site for Dotan Veretzky.
 
-## 🎯 Project Achievements
+- **Clean mode** — an Apple-style minimal cinematic portfolio. Default.
+- **Explore mode** — a Bruno Simon-style walkable 3D world of every chapter of Dotan's career. _(In progress.)_
 
-1. 🧑‍💻 Gained hands-on experience with ![JavaScript](https://img.shields.io/badge/-JavaScript-black?style=flat&logo=javascript), ![HTML](https://img.shields.io/badge/-HTML5-E34F26?style=flat&logo=html5&logoColor=white), ![CSS](https://img.shields.io/badge/-CSS3-1572B6?style=flat&logo=css3) and ![Bootstrap](https://img.shields.io/badge/-Bootstrap-563D7C?style=flat&logo=bootstrap).
-2. 🌐 Developed a functional personal website.
-3. 📚 Learned how to manage and maintain a ![GitHub](https://img.shields.io/badge/-GitHub-181717?style=flat&logo=github) repository.
-4. 🔄 Navigated the deprecation of ![Heroku](https://img.shields.io/badge/-Heroku-430098?style=flat&logo=heroku) free resources on November 28, 2022, and successfully transitioned to ![Netlify](https://img.shields.io/badge/-Netlify-00C7B7?style=flat&logo=netlify) for hosting and deployment services.
-5. 💡 Implemented a SaaS product, "ProveSource", to enhance engagement with recruiters and visitors during my job search period.
+A single mode toggle in the top-right switches between the two and shareable URLs encode the mode (`?mode=explore`).
 
-## 🚀 Deployment
+## Tech
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/67cdc9dd-3c61-4092-9b7d-74eead7e4f76/deploy-status)](https://app.netlify.com/sites/dotanv/deploys)
+- Next.js 15 (App Router) + React 19 + TypeScript
+- Tailwind CSS, `next-themes` (light/dark)
+- `framer-motion` for transitions
+- `zustand` for mode/UI state
+- `three` + `@react-three/fiber` + `@react-three/drei` for the 3D scene (Explore mode)
+- Formspree (contact form), GA4 + ProveSource (preserved from the previous site)
 
-You can view the deployed website on Netlify via this link: [🔗 My Website](https://dotanv.netlify.app/)
+## Local development
 
-## 📂 Project Directory Structure
+```bash
+nvm use            # Node 20+
+npm install
+npm run dev        # http://localhost:3000
+npm run build && npm start
+```
 
-- `css\` - 🎨 Contains the CSS stylesheets for the website.
-- `images\` - 🖼️ Houses the images used in the website.
-- `scripts\` - 📜 Stores the JavaScript files used in the website.
-- `favicon.ico` - 🌐 A custom favicon I created for the website.
-- `index.html` - 📄 The main HTML page to open the website in a browser.
+## Deploy
 
-Thank you for your interest in my project! 🙏
+Deployed on Vercel as project **`dotanv`** → <https://dotanv.vercel.app>.
+Every push to `claude/redesign-personal-website-6RHw2` triggers a preview build.
+The current Netlify site (`dotanv.netlify.app`) stays live until DNS is swapped.
+
+## Branch
+
+All redesign work lives on `claude/redesign-personal-website-6RHw2`. The legacy
+HTML/Bootstrap site is preserved at the repo root until the final cutover commit
+deletes it.
+
+## Content
+
+All copy and links live in `content/`:
+
+- `site.ts` — name, contacts, social, GA/ProveSource/Formspree IDs
+- `experience.ts` — the four roles
+- `education.ts` — the four programs
+- `projects.ts` — placeholders for the indie-game studio
+
+Both Clean and Explore mode read from these same files.
