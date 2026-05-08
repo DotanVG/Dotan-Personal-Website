@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
+
+// Naval angle on the circle (atan2(z, x) for position [16, -14])
+const ARC_START = Math.atan2(-14, 16); // ≈ -0.7188 rad
+// Clockwise sweep from Naval to Zota (at angle 0) = full circle minus the short gap
+const ARC_SPAN = Math.PI * 2 + ARC_START; // ≈ 5.564 rad
 
 const ISLAND_RADIUS = 40;
 
@@ -67,6 +73,7 @@ export function World() {
       </mesh>
 
       <Path />
+      <TimelineArc />
 
       <mesh position={[0, -0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[400, 64]} />
@@ -174,6 +181,101 @@ function CenterStatue() {
           flatShading
         />
       </mesh>
+    </group>
+  );
+}
+
+function TimelineArc() {
+  const arcGeo = useMemo(() => {
+    const r = 22;
+    const N = 256;
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= N; i++) {
+      const a = ARC_START - (i / N) * ARC_SPAN;
+      pts.push(new THREE.Vector3(Math.cos(a) * r, 0.018, Math.sin(a) * r));
+    }
+    return new THREE.BufferGeometry().setFromPoints(pts);
+  }, []);
+
+  const orbRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
+
+  useFrame(({ clock }) => {
+    const raw = (clock.getElapsedTime() * 0.05) % 1; // ~20 s per lap
+    // Fade in at start, fade out near Zota
+    const fadeZone = 0.04;
+    const alpha =
+      raw < fadeZone
+        ? raw / fadeZone
+        : raw > 1 - fadeZone
+          ? (1 - raw) / fadeZone
+          : 1;
+
+    const a = ARC_START - raw * ARC_SPAN;
+    const r = 22;
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    const pulse = 0.6 + 0.4 * Math.sin(clock.getElapsedTime() * 7);
+
+    if (orbRef.current) {
+      orbRef.current.position.set(x, 0.55, z);
+      (orbRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        pulse * alpha * 5;
+      (orbRef.current.material as THREE.MeshStandardMaterial).opacity = alpha;
+    }
+    if (glowRef.current) {
+      glowRef.current.position.set(x, 0.55, z);
+      glowRef.current.scale.setScalar(1.3 + pulse * 0.45);
+      (glowRef.current.material as THREE.MeshStandardMaterial).opacity =
+        alpha * 0.32;
+    }
+    if (lightRef.current) {
+      lightRef.current.position.set(x, 2, z);
+      lightRef.current.intensity = pulse * alpha * 3;
+    }
+  });
+
+  return (
+    <group>
+      {/* Persistent glowing arc — timeline path from Naval to Zota */}
+      <line>
+        <primitive object={arcGeo} attach="geometry" />
+        <lineBasicMaterial color="#a78bfa" transparent opacity={0.45} />
+      </line>
+
+      {/* Orb core */}
+      <mesh ref={orbRef} position={[16, 0.55, -14]}>
+        <sphereGeometry args={[0.28, 12, 12]} />
+        <meshStandardMaterial
+          color="#ddd6fe"
+          emissive="#7c3aed"
+          emissiveIntensity={5}
+          transparent
+          opacity={1}
+        />
+      </mesh>
+
+      {/* Orb outer glow */}
+      <mesh ref={glowRef} position={[16, 0.55, -14]}>
+        <sphereGeometry args={[0.46, 12, 12]} />
+        <meshStandardMaterial
+          color="#a78bfa"
+          emissive="#6d28d9"
+          emissiveIntensity={2}
+          transparent
+          opacity={0.32}
+        />
+      </mesh>
+
+      {/* Dynamic light that follows the orb */}
+      <pointLight
+        ref={lightRef}
+        color="#a78bfa"
+        intensity={3}
+        distance={11}
+        position={[16, 2, -14]}
+      />
     </group>
   );
 }

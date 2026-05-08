@@ -45,14 +45,22 @@ function buildMarkers(): MarkerData[] {
     building: e.exploreBuilding ?? "block",
     position: e.position,
   }));
-  return [...expMarkers, ...eduMarkers];
+  const all = [...expMarkers, ...eduMarkers];
+  all.sort((a, b) => {
+    const sa = parseInt(a.start);
+    const sb = parseInt(b.start);
+    if (sa !== sb) return sa - sb;
+    const ea = a.end === "Present" ? 9999 : parseInt(a.end);
+    const eb = b.end === "Present" ? 9999 : parseInt(b.end);
+    return ea - eb;
+  });
+  return all;
 }
 
 export default function ExploreScene() {
   const isMobile = useIsMobile();
   const activeMarker = useApp((s) => s.activeMarker);
   const setActiveMarker = useApp((s) => s.setActiveMarker);
-  const setMode = useApp((s) => s.setMode);
   const [dprFactor, setDprFactor] = useState(1);
   const markers = buildMarkers();
   const active = activeMarker

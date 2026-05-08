@@ -57,7 +57,7 @@ export const experience: Experience[] = [
       "Worked across the full stack: front-end, back-end, database management, and server configuration, to ship high-performance solutions.",
     ],
     exploreBuilding: "pavilion",
-    position: [0, 22],
+    position: [-16, 14],
   },
   {
     slug: "electra",
@@ -74,6 +74,6 @@ export const experience: Experience[] = [
       "Access-control systems and control rooms.",
     ],
     exploreBuilding: "shed",
-    position: [-16, 14],
+    position: [-16, -14],
   },
 ];

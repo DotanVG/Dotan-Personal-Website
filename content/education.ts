@@ -18,7 +18,7 @@ export const education: Education[] = [
       "Application performance management.",
     ],
     exploreBuilding: "academy",
-    position: [-22, 0],
+    position: [0, 22],
   },
   {
     slug: "hackeru",
@@ -34,7 +34,7 @@ export const education: Education[] = [
       "End-to-end project work and deployment.",
     ],
     exploreBuilding: "glassCube",
-    position: [-16, -14],
+    position: [-22, 0],
   },
   {
     slug: "ort",
