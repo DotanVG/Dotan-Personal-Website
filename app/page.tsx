@@ -7,24 +7,30 @@ import { ProjectsTeaser } from "@/components/clean/ProjectsTeaser";
 import { Contact } from "@/components/clean/Contact";
 import { Footer } from "@/components/clean/Footer";
 import { ModeRouter } from "@/components/mode/ModeRouter";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { Cursor } from "@/components/ui/Cursor";
 
 export default function Page() {
   return (
-    <ModeRouter
-      cleanContent={
-        <>
-          <Nav />
-          <main>
-            <Hero />
-            <About />
-            <ExperienceTimeline />
-            <EducationTimeline />
-            <ProjectsTeaser />
-            <Contact />
-          </main>
-          <Footer />
-        </>
-      }
-    />
+    <>
+      <ScrollProgress />
+      <Cursor />
+      <ModeRouter
+        cleanContent={
+          <>
+            <Nav />
+            <main>
+              <Hero />
+              <About />
+              <ExperienceTimeline />
+              <EducationTimeline />
+              <ProjectsTeaser />
+              <Contact />
+            </main>
+            <Footer />
+          </>
+        }
+      />
+    </>
   );
 }

@@ -1,13 +1,37 @@
 "use client";
 
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
 import { Button } from "@/components/ui/Button";
+import { Magnetic } from "@/components/ui/Magnetic";
+import { useReducedMotion } from "@/lib/useReducedMotion";
+
+const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
+  ssr: false,
+  loading: () => <HeroFallback />,
+});
+
+function HeroFallback() {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0"
+      style={{
+        background:
+          "radial-gradient(50% 50% at 50% 50%, rgb(var(--accent-glow) / 0.5) 0%, transparent 60%)",
+        filter: "blur(40px)",
+      }}
+    />
+  );
+}
 
 export function Hero() {
   const [roleIdx, setRoleIdx] = useState(0);
+  const reduced = useReducedMotion();
+
   useEffect(() => {
     const id = setInterval(
       () => setRoleIdx((i) => (i + 1) % site.roles.length),
@@ -29,13 +53,9 @@ export function Hero() {
             "radial-gradient(60% 50% at 75% 30%, rgb(var(--accent-glow) / 0.18) 0%, transparent 60%), radial-gradient(50% 40% at 20% 80%, rgb(var(--ink) / 0.12) 0%, transparent 60%)",
         }}
       />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -z-10 h-px top-24 bg-gradient-to-r from-transparent via-line to-transparent"
-      />
 
       <div className="mx-auto grid w-full max-w-page grid-cols-1 gap-12 px-6 md:grid-cols-12 md:gap-16 md:px-8">
-        <div className="md:col-span-8">
+        <div className="md:col-span-7">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -98,10 +118,14 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-10 flex flex-wrap items-center gap-3"
           >
-            <Button href="#contact">Let&apos;s get in touch →</Button>
-            <Button href="#experience" variant="outline">
-              See my work
-            </Button>
+            <Magnetic strength={0.35}>
+              <Button href="#contact">Let&apos;s get in touch →</Button>
+            </Magnetic>
+            <Magnetic strength={0.25}>
+              <Button href="#experience" variant="outline">
+                See my work
+              </Button>
+            </Magnetic>
             <Link
               href="?mode=explore"
               className="ml-2 text-sm text-ink/60 underline-offset-4 hover:text-ink hover:underline"
@@ -111,36 +135,22 @@ export function Hero() {
           </motion.div>
         </div>
 
-        <div className="relative hidden md:col-span-4 md:block">
-          <motion.div
-            aria-hidden
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="absolute right-0 top-1/2 size-[min(28rem,32vw)] -translate-y-1/2 rounded-full"
-            style={{
-              background:
-                "conic-gradient(from 220deg at 50% 50%, rgb(var(--accent-glow) / 0.6), rgb(var(--ink) / 0.05), rgb(var(--accent-glow) / 0.6))",
-              filter: "blur(40px)",
-              animation: "pulseSlow 6s ease-in-out infinite",
-            }}
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="relative ml-auto size-[min(22rem,26vw)] rounded-full border border-line bg-canvas-raised/40 backdrop-blur"
-          >
-            <div className="absolute inset-3 rounded-full border border-line" />
-            <div className="absolute inset-6 rounded-full border border-line/50" />
-            <div
-              className="absolute inset-1/4 rounded-full"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, rgb(var(--accent-glow)) 0%, transparent 60%)",
-              }}
-            />
-          </motion.div>
+        <div className="relative hidden h-[min(34rem,55vh)] md:col-span-5 md:block">
+          {reduced ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                aria-hidden
+                className="size-[min(22rem,30vw)] rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, rgb(var(--accent-glow)) 0%, transparent 60%), conic-gradient(from 220deg, rgb(var(--accent-glow) / 0.6), rgb(var(--ink) / 0.05), rgb(var(--accent-glow) / 0.6))",
+                  filter: "blur(2px)",
+                }}
+              />
+            </div>
+          ) : (
+            <HeroCanvas />
+          )}
         </div>
       </div>
 
