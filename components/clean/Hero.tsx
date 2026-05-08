@@ -42,7 +42,7 @@ export function Hero() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-[5] hidden md:block"
         >
-          <div className="absolute right-[-8%] top-1/2 h-[120%] w-[70%] -translate-y-1/2">
+          <div className="pointer-events-auto absolute right-[-8%] top-1/2 h-[120%] w-[70%] -translate-y-1/2">
             <HeroCanvas />
           </div>
         </div>

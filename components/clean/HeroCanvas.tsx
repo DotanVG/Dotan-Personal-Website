@@ -1,12 +1,11 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Icosahedron, MeshTransmissionMaterial, Environment, Float } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
 import { useTheme } from "next-themes";
 import { createNoise3D } from "simplex-noise";
 import * as THREE from "three";
-import { damp } from "maath/easing";
 
 function useScrollProgress() {
   const ref = useRef(0);
@@ -22,22 +21,37 @@ function useScrollProgress() {
   return ref;
 }
 
-function HeroBlob({ scrollRef }: { scrollRef: React.RefObject<number> }) {
+type PointerVelocityRef = React.RefObject<{
+  x: number;
+  y: number;
+}>;
+
+function HeroBlob({
+  pointerVelocityRef,
+  scrollRef,
+}: {
+  pointerVelocityRef: PointerVelocityRef;
+  scrollRef: React.RefObject<number>;
+}) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const targetRot = useRef(new THREE.Vector2(0, 0));
   const noise = useMemo(() => createNoise3D(), []);
   const basePositions = useRef<Float32Array | null>(null);
-  const { pointer } = useThree();
   const { resolvedTheme } = useTheme();
 
   useFrame((_, dt) => {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    targetRot.current.set(pointer.x * 0.5, pointer.y * 0.4);
-    damp(mesh.rotation, "x", -targetRot.current.y, 0.4, dt);
-    damp(mesh.rotation, "y", targetRot.current.x, 0.4, dt);
+    const velocity = pointerVelocityRef.current;
+    const sensitivity = 0.005;
+    const damping = 0.95;
+
+    mesh.rotation.y += velocity.x * sensitivity;
+    mesh.rotation.x += velocity.y * sensitivity;
     mesh.rotation.z += dt * 0.05;
+
+    velocity.x *= damping;
+    velocity.y *= damping;
 
     const t = performance.now() * 0.00045;
     const geom = mesh.geometry as THREE.BufferGeometry;
@@ -94,18 +108,56 @@ function HeroBlob({ scrollRef }: { scrollRef: React.RefObject<number> }) {
 
 export default function HeroCanvas() {
   const scrollRef = useScrollProgress();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pointerVelocityRef = useRef({ x: 0, y: 0 });
+  const previousPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const containerEl = container;
+
+    function handlePointerMove(event: PointerEvent) {
+      const rect = containerEl.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const previous = previousPointerRef.current;
+
+      if (previous) {
+        pointerVelocityRef.current.x = x - previous.x;
+        pointerVelocityRef.current.y = y - previous.y;
+      }
+
+      previousPointerRef.current = { x, y };
+    }
+
+    function resetPointer() {
+      previousPointerRef.current = null;
+    }
+
+    containerEl.addEventListener("pointermove", handlePointerMove);
+    containerEl.addEventListener("pointerleave", resetPointer);
+
+    return () => {
+      containerEl.removeEventListener("pointermove", handlePointerMove);
+      containerEl.removeEventListener("pointerleave", resetPointer);
+    };
+  }, []);
+
   return (
-    <Canvas
-      dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 7], fov: 32 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ background: "transparent" }}
-    >
-      <ambientLight intensity={0.45} />
-      <directionalLight position={[3, 4, 5]} intensity={1.4} />
-      <directionalLight position={[-4, -2, -3]} intensity={0.4} color="#fde68a" />
-      <HeroBlob scrollRef={scrollRef} />
-      <Environment preset="city" />
-    </Canvas>
+    <div ref={containerRef} className="h-full w-full">
+      <Canvas
+        dpr={[1, 1.75]}
+        camera={{ position: [0, 0, 7], fov: 32 }}
+        gl={{ antialias: true, alpha: true }}
+        style={{ background: "transparent" }}
+      >
+        <ambientLight intensity={0.45} />
+        <directionalLight position={[3, 4, 5]} intensity={1.4} />
+        <directionalLight position={[-4, -2, -3]} intensity={0.4} color="#fde68a" />
+        <HeroBlob pointerVelocityRef={pointerVelocityRef} scrollRef={scrollRef} />
+        <Environment preset="city" />
+      </Canvas>
+    </div>
   );
 }
