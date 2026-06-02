@@ -1,7 +1,8 @@
 ---
 tracker:
-  kind: github
-  repo: DotanVG/Dotan-Personal-Website
+  kind: linear
+  project_slug: dotan-personal-website-6460cd1c1525
+  states: [Todo, "In Progress"]
 polling:
   interval_ms: 30000
 workspace:
