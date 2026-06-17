@@ -1,13 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
 import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 

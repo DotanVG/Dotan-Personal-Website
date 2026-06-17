@@ -1,0 +1,44 @@
+# Dotan Veretzky — Personal Website
+
+> Software Engineer & Indie Game Developer based in Israel.
+
+## About
+
+Dotan Veretzky (born 1994) is a full-stack developer with a background in electronics and low-voltage systems. He builds software that feels effortless to use, with experience across web, desktop, games, and payment-gateway integrations.
+
+- Email: dotanvg@gmail.com
+- LinkedIn: https://www.linkedin.com/in/dotan-v/
+- GitHub: https://github.com/DotanVG
+- Itch.io: https://dotanv.itch.io/
+
+## Experience
+
+**Integration QA Specialist — Zota** (2025–Present)
+Builds and hardens payment-gateway integrations for a global fintech. API integrations, security, compliance, and scalability.
+
+**SAP Implementation & Training Specialist — Ness Technologies** (2024–2025)
+Rolled out and trained the SAP IS-H system at Soroka Medical Center.
+
+**Software Full-Stack Developer — Kanomi LTD** (2022–2024)
+End-to-end Windows applications, branded Chromium browsers, Chrome extensions (C# WPF, Vite, JavaScript).
+
+**Low-Voltage Systems Field Technician — Electra Megason LTD** (2019–2020)
+Installation and maintenance of surveillance, fire-detection, CCTV, and access-control systems.
+
+## Education
+
+- Nitzanim — Gifted Youth Programme
+- HackerU — Full-Stack Web Development
+- ORT — Electronics Practical Engineering
+- Naval Officers School — Naval Officer training
+
+## Tech Stack
+
+Next.js 15, React 19, TypeScript, Three.js / React Three Fiber, Framer Motion, Tailwind CSS, C# WPF, Chromium/Chrome Extensions, SAP IS-H.
+
+## Site
+
+This site has two modes: a clean portfolio view and a 3-D explorable world built with React Three Fiber and Rapier physics.
+
+Source: https://github.com/DotanVG/Dotan-Personal-Website
+Live: https://dotanv.vercel.app
