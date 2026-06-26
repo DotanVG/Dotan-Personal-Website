@@ -28,7 +28,8 @@ export const site: SiteConfig = {
   },
   services: {
     formspreeId: "xqknykyd",
-    proveSourceApiKey: process.env.NEXT_PUBLIC_PROVESRC_API_KEY ?? "",
+    proveSourceApiKey:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2MmNhZDNlMWMyOGRjYjYzZDY0ZDEyYjMiLCJpYXQiOjE2NTc0NTk2ODF9.ANrAwRNxOGnHpka90mJ7jybFpTVFgv248OOxUoZDpYA",
     proveSourceVersion: "0.0.4",
     gaId: "G-EFHW18YHGH",
   },
