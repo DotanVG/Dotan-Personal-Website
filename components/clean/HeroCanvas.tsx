@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Icosahedron, MeshTransmissionMaterial, Environment, Float } from "@react-three/drei";
-import { useEffect, useMemo, useRef } from "react";
+import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useTheme } from "next-themes";
 import { createNoise3D } from "simplex-noise";
 import * as THREE from "three";
@@ -19,6 +19,19 @@ function useScrollProgress() {
     return () => window.removeEventListener("scroll", update);
   }, []);
   return ref;
+}
+
+// The drei Environment preset streams an HDR from an external CDN; if that
+// fetch fails (offline, blocked, CDN down) the thrown error must not take
+// down the whole page — degrade to the plain lights instead.
+class EnvironmentBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
 
 type PointerVelocityRef = React.RefObject<{
@@ -156,7 +169,9 @@ export default function HeroCanvas() {
         <directionalLight position={[3, 4, 5]} intensity={1.4} />
         <directionalLight position={[-4, -2, -3]} intensity={0.4} color="#fde68a" />
         <HeroBlob pointerVelocityRef={pointerVelocityRef} scrollRef={scrollRef} />
-        <Environment preset="city" />
+        <EnvironmentBoundary>
+          <Environment preset="city" />
+        </EnvironmentBoundary>
       </Canvas>
     </div>
   );
