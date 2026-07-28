@@ -2,7 +2,12 @@
 tracker:
   kind: linear
   project_slug: dotan-personal-website-6460cd1c1525
-  states: [Todo, "In Progress"]
+  active_states:
+    - Todo
+    - "In Progress"
+  terminal_states:
+    - Done
+    - Cancelled
 polling:
   interval_ms: 30000
 workspace:
@@ -18,7 +23,14 @@ agent:
   max_concurrent_agents: 2
   max_turns: 20
 codex:
-  command: codex app-server
+  command: >-
+    codex
+    --config 'model="gpt-5.6-sol"'
+    --config 'model_reasoning_effort="high"'
+    --config 'agents.default_subagent_model="gpt-5.6-terra"'
+    --config 'agents.default_subagent_reasoning_effort="medium"'
+    --config 'agents.max_concurrent_threads_per_session=2'
+    app-server
   approval_policy: never
   thread_sandbox: danger-full-access
   stall_timeout_ms: 1800000
@@ -112,6 +124,29 @@ Branch naming: `feature/<kebab-name>` matching the issue title.
 2. Reproduce the bug or verify current behavior before changing code.
 3. Create a feature branch from `staging`: `git checkout -b feature/<name>`.
 4. Write a brief plan with acceptance criteria before touching code.
+
+## Agent orchestration
+
+The primary Sol agent owns the issue, implementation, integration, validation
+decisions, Git operations, PR, and final report. It is the only agent allowed
+to edit source files.
+
+Use the project agents under `.codex/agents/` deliberately:
+
+- `code_explorer` maps unfamiliar Next.js, React, and Three.js execution paths before edits.
+- `visual_qa` reproduces and verifies layout, motion, WebGL, responsive, and accessibility behavior.
+- `reviewer` performs the final correctness, lifecycle, performance, and regression review.
+- `verifier` runs the required command suite once the working tree is stable.
+
+Delegation rules:
+
+1. Delegate only bounded, independent work with a concrete evidence-based output.
+2. Run at most two subagents concurrently.
+3. Parallelize independent reads or final review plus verification; keep dependent work sequential.
+4. Do not spawn multiple implementation agents or allow agents to edit overlapping files.
+5. For visual changes, run `visual_qa` before editing to establish a baseline and after editing at desktop and mobile breakpoints.
+6. For medium/high-risk changes, run `reviewer` after implementation and resolve every material finding before handoff.
+7. Treat subagent completion as evidence, not completion of the issue; the primary agent must synthesize results and verify every acceptance criterion.
 
 ## Step 2: Execution
 
