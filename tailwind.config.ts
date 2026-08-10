@@ -14,6 +14,25 @@ const config: Config = {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
+      fontSize: {
+        // Optical sizing: leading and tracking tighten as the type grows, so the
+        // clamps are expressed in rem/vw rather than em (em would scale with the
+        // font-size and hold the ratio constant).
+        "display-xl": [
+          "clamp(3rem, 11vw, 9rem)",
+          {
+            lineHeight: "clamp(2.85rem, 0.4rem + 8.95vw, 7.75rem)",
+            letterSpacing: "clamp(-0.45rem, 0.09rem - 0.66vw, -0.065rem)",
+          },
+        ],
+        "display-lg": [
+          "clamp(2.25rem, 1.63rem + 2.65vw, 3.75rem)",
+          {
+            lineHeight: "1.05",
+            letterSpacing: "clamp(-0.11rem, -0.012rem - 0.17vw, -0.032rem)",
+          },
+        ],
+      },
       colors: {
         ink: {
           DEFAULT: "rgb(var(--ink) / <alpha-value>)",

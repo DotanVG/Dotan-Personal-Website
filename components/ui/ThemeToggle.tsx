@@ -4,9 +4,12 @@ import { useTheme } from "next-themes";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
+import { INSTANT, SPRING_UI } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
+  const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === "dark";
@@ -31,7 +34,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           initial={{ y: -12, opacity: 0, rotate: -45 }}
           animate={{ y: 0, opacity: 1, rotate: 0 }}
           exit={{ y: 12, opacity: 0, rotate: 45 }}
-          transition={{ duration: 0.25 }}
+          transition={reduced ? INSTANT : SPRING_UI}
           className="relative text-base"
         >
           {mounted ? (isDark ? "☾" : "☀") : ""}

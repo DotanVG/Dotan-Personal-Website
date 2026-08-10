@@ -63,7 +63,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.05 }}
-            className="hero-headline font-display text-[clamp(3rem,11vw,9rem)] font-semibold text-balance"
+            className="hero-headline font-display text-display-xl font-semibold text-balance"
           >
             Dotan
             <br />

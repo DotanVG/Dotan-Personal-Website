@@ -44,8 +44,8 @@ export function Instructions() {
           </span>
           <span className="text-sm text-white/90 md:text-base">
             {isMobile
-              ? "Drag the joystick to walk · Tap signs to read · Tap to dismiss"
-              : "WASD or arrow keys to walk · Shift to run · Walk onto a glowing pad to read · E to close"}
+              ? "Drag the joystick to walk · Drag the world to look around · Tap signs to read"
+              : "WASD or arrow keys to walk · Drag to look around · Shift to run · Walk onto a glowing pad to read · E to close"}
           </span>
         </motion.button>
       )}

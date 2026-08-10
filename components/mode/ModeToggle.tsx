@@ -5,6 +5,10 @@ import { useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
+import { INSTANT, SPRING_UI } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
+
+const OPTIONS = ["clean", "explore"] as const;
 
 function prefetchExplore() {
   void import("@/components/explore/ExploreScene");
@@ -13,8 +17,10 @@ function prefetchExplore() {
 export function ModeToggle({ className }: { className?: string }) {
   const mode = useApp((s) => s.mode);
   const setMode = useApp((s) => s.setMode);
+  const reduced = useReducedMotion();
   const isExplore = mode === "explore";
   const prefetched = useRef(false);
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     if (prefetched.current) return;
@@ -44,6 +50,16 @@ export function ModeToggle({ className }: { className?: string }) {
     setMode(next);
   }
 
+  function onKeyDown(e: React.KeyboardEvent, index: number) {
+    const forward = e.key === "ArrowRight" || e.key === "ArrowDown";
+    const back = e.key === "ArrowLeft" || e.key === "ArrowUp";
+    if (!forward && !back) return;
+    e.preventDefault();
+    const next = (index + (forward ? 1 : -1) + OPTIONS.length) % OPTIONS.length;
+    buttons.current[next]?.focus();
+    setTo(OPTIONS[next]);
+  }
+
   function warm() {
     if (prefetched.current) return;
     prefetched.current = true;
@@ -53,24 +69,31 @@ export function ModeToggle({ className }: { className?: string }) {
   return (
     <LayoutGroup id="mode-toggle">
       <div
-        role="group"
+        role="radiogroup"
         aria-label="Site mode"
         onMouseEnter={warm}
         onTouchStart={warm}
         onFocus={warm}
         className={cn(
-          "relative inline-flex h-9 items-center gap-1 overflow-hidden rounded-full border border-line bg-canvas-raised/60 p-1 text-xs font-medium backdrop-blur transition-colors hover:border-ink/30",
+          "relative inline-flex h-9 items-center gap-1 rounded-full border border-line bg-canvas-raised/60 p-1 text-xs font-medium backdrop-blur transition-colors hover:border-ink/30",
           className,
         )}
       >
-        {(["clean", "explore"] as const).map((opt) => {
+        {OPTIONS.map((opt, i) => {
           const selected = (opt === "explore") === isExplore;
           return (
             <button
               key={opt}
+              ref={(el) => {
+                buttons.current[i] = el;
+              }}
               type="button"
+              role="radio"
+              aria-checked={selected}
+              // Roving tabindex: the group is a single tab stop, arrows move within it.
+              tabIndex={selected ? 0 : -1}
               onClick={() => setTo(opt)}
-              aria-pressed={selected}
+              onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
                 "relative isolate rounded-full px-3 py-1 capitalize transition-colors duration-300",
                 selected ? "text-canvas" : "text-ink/65 hover:text-ink",
@@ -79,7 +102,7 @@ export function ModeToggle({ className }: { className?: string }) {
               {selected && (
                 <motion.span
                   layoutId="mode-toggle-pill"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  transition={reduced ? INSTANT : SPRING_UI}
                   className="absolute inset-0 -z-10 rounded-full bg-ink"
                 />
               )}

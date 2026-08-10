@@ -11,7 +11,7 @@ export function InfoPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="pointer-events-auto fixed inset-x-4 bottom-4 z-30 mx-auto max-w-2xl rounded-2xl border border-line bg-canvas-raised/95 p-5 shadow-2xl backdrop-blur md:bottom-8 md:p-6">
+    <div className="pointer-events-auto fixed inset-x-4 bottom-4 z-30 mx-auto max-w-2xl rounded-2xl border border-line bg-canvas-raised/80 p-5 shadow-2xl backdrop-blur-xl md:bottom-8 md:p-6">
       <div className="flex items-start gap-4">
         <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-line bg-canvas md:size-20">
           <Image

@@ -21,3 +21,5 @@ next-env.d.ts
 
 .idea/
 .vscode/
+
+docs/qa_checklist.md

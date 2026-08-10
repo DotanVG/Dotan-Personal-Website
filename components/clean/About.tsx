@@ -24,7 +24,7 @@ export function About() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-16">
         <div className="md:col-span-7">
           <RevealOnScroll>
-            <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance md:text-6xl">
+            <h2 className="font-display text-display-lg font-semibold text-balance">
               I build software the way I make games:{"\ "}
               <span className="text-ink/40 transition-colors duration-700 hover:text-ink">
                 curious, deliberate, playful.

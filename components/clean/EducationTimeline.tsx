@@ -12,7 +12,7 @@ export function EducationTimeline() {
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-ink/60">
           Education
         </p>
-        <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
+        <h2 className="max-w-3xl font-display text-display-lg font-semibold text-balance">
           Where I learned to think.
         </h2>
       </RevealOnScroll>

@@ -4,10 +4,13 @@ import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { site } from "@/content/site";
 import { trackEvent } from "@/lib/analytics";
+import { INSTANT, SPRING_UI } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 export function ContactForm() {
+  const reduced = useReducedMotion();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -55,9 +58,12 @@ export function ContactForm() {
         {status === "success" ? (
           <motion.div
             key="success"
+            role="status"
+            aria-live="polite"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            transition={reduced ? INSTANT : SPRING_UI}
             className="relative flex flex-col items-start gap-3 py-8"
           >
             <span aria-hidden className="text-3xl">
@@ -95,38 +101,41 @@ export function ContactForm() {
             className="relative flex flex-col gap-4"
             noValidate
           >
-            <Field label="Name" htmlFor="name">
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                autoComplete="name"
-                className="input"
-                placeholder="Your name"
-              />
-            </Field>
-            <Field label="Email" htmlFor="email">
-              <input
-                id="email"
-                name="_replyto"
-                type="email"
-                required
-                autoComplete="email"
-                className="input"
-                placeholder="you@example.com"
-              />
-            </Field>
-            <Field label="Message" htmlFor="message">
-              <textarea
-                id="message"
-                name="message"
-                rows={5}
-                required
-                className="input resize-y"
-                placeholder="Tell me what you're working on…"
-              />
-            </Field>
+            <fieldset className="flex flex-col gap-4">
+              <legend className="sr-only">Your message details</legend>
+              <Field label="Name" htmlFor="name">
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  className="input"
+                  placeholder="Your name"
+                />
+              </Field>
+              <Field label="Email" htmlFor="email">
+                <input
+                  id="email"
+                  name="_replyto"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="input"
+                  placeholder="you@example.com"
+                />
+              </Field>
+              <Field label="Message" htmlFor="message">
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={5}
+                  required
+                  className="input resize-y"
+                  placeholder="Tell me what you're working on…"
+                />
+              </Field>
+            </fieldset>
 
             <input
               type="text"
