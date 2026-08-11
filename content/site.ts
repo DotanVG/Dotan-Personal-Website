@@ -19,7 +19,7 @@ export const site: SiteConfig = {
   phone: "+972-54-779-2350",
   phoneIntl: "+972547792350",
   whatsappE164: "972547792350",
-  dob: "1994-08-09",
+  dob: "1994-09-08",
   social: {
     linkedin: "https://www.linkedin.com/in/dotan-v/",
     github: "https://github.com/DotanVG",
