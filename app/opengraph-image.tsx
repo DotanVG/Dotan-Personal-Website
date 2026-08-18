@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-import { avatarDataUri } from "./opengraph-image-avatar";
 
 export const runtime = "edge";
 export const alt = "Dotan Veretzky - Software Engineer & Indie Game Developer";
@@ -46,44 +45,29 @@ export default function OpengraphImage() {
           <span>dotanv · vercel · app</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 40 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            <div
-              style={{
-                fontSize: 132,
-                lineHeight: 0.95,
-                fontWeight: 700,
-                letterSpacing: -4,
-              }}
-            >
-              Dotan
-              <br />
-              Veretzky.
-            </div>
-            <div
-              style={{
-                fontSize: 38,
-                color: "#d4d4d4",
-                fontWeight: 400,
-                maxWidth: 720,
-              }}
-            >
-              Software Engineer · Indie Game Developer
-            </div>
-          </div>
-          <img
-            src={avatarDataUri}
-            alt=""
-            width={280}
-            height={280}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div
             style={{
-              borderRadius: "50%",
-              objectFit: "cover",
-              border: "6px solid rgba(250, 204, 21, 0.55)",
-              boxShadow: "0 0 70px rgba(250, 204, 21, 0.28)",
-              flexShrink: 0,
+              fontSize: 132,
+              lineHeight: 0.95,
+              fontWeight: 700,
+              letterSpacing: -4,
             }}
-          />
+          >
+            Dotan
+            <br />
+            Veretzky.
+          </div>
+          <div
+            style={{
+              fontSize: 38,
+              color: "#d4d4d4",
+              fontWeight: 400,
+              maxWidth: 920,
+            }}
+          >
+            Software Engineer · Indie Game Developer
+          </div>
         </div>
 
         <div
