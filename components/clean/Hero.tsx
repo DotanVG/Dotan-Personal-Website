@@ -1,19 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
 import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { useReducedMotion } from "@/lib/useReducedMotion";
-
-const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 
 export function Hero() {
   const [roleIdx, setRoleIdx] = useState(0);
-  const reduced = useReducedMotion();
 
   useEffect(() => {
     const id = setInterval(
@@ -36,17 +31,6 @@ export function Hero() {
             "radial-gradient(60% 50% at 75% 30%, rgb(var(--accent-glow) / 0.18) 0%, transparent 60%), radial-gradient(50% 40% at 20% 80%, rgb(var(--ink) / 0.12) 0%, transparent 60%)",
         }}
       />
-
-      {!reduced && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-[5] hidden md:block"
-        >
-          <div className="pointer-events-auto absolute right-[-8%] top-1/2 h-[120%] w-[70%] -translate-y-1/2">
-            <HeroCanvas />
-          </div>
-        </div>
-      )}
 
       <div className="relative z-10 mx-auto grid w-full max-w-page grid-cols-1 gap-12 px-6 md:grid-cols-12 md:gap-16 md:px-8">
         <div className="md:col-span-8">

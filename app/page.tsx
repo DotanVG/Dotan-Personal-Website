@@ -8,6 +8,7 @@ import { Footer } from "@/components/clean/Footer";
 import { ModeRouter } from "@/components/mode/ModeRouter";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { Cursor } from "@/components/ui/Cursor";
+import { BlobBackdrop } from "@/components/clean/BlobBackdrop";
 
 export default function Page() {
   return (
@@ -17,15 +18,18 @@ export default function Page() {
       <ModeRouter
         cleanContent={
           <>
-            <Nav />
-            <main>
-              <Hero />
-              <About />
-              <ExperienceTimeline />
-              <EducationTimeline />
-              <Contact />
-            </main>
-            <Footer />
+            <BlobBackdrop />
+            <div className="relative z-10">
+              <Nav />
+              <main>
+                <Hero />
+                <About />
+                <ExperienceTimeline />
+                <EducationTimeline />
+                <Contact />
+              </main>
+              <Footer />
+            </div>
           </>
         }
       />
