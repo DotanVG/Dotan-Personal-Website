@@ -156,7 +156,7 @@ export default function HeroCanvas() {
         <directionalLight position={[3, 4, 5]} intensity={1.4} />
         <directionalLight position={[-4, -2, -3]} intensity={0.4} color="#fde68a" />
         <HeroBlob pointerVelocityRef={pointerVelocityRef} scrollRef={scrollRef} />
-        <Environment preset="city" />
+        <Environment files="/hdri/potsdamer_platz_1k.hdr" />
       </Canvas>
     </div>
   );
