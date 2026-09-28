@@ -341,7 +341,8 @@ test("the handbrake breaks rear grip for a controllable slide", () => {
   };
   const grip = slip(false);
   const slide = slip(true);
-  assert.ok(slide > grip * 1.8 && slide > 2, `slide ${slide.toFixed(2)} vs grip ${grip.toFixed(2)}`);
+  // The handbrake also stops hard now, so the slide is shorter but still clearly larger.
+  assert.ok(slide > grip * 1.5 && slide > 2, `slide ${slide.toFixed(2)} vs grip ${grip.toFixed(2)}`);
 });
 
 test("vehicle kinds differ in acceleration and top speed", () => {
@@ -596,4 +597,72 @@ test("a traffic car jammed behind a blockage gives up after a bounded delay, eve
   assert.ok(gaveUpAt > 0 && gaveUpAt < 32, `gave up at ${gaveUpAt.toFixed(1)} s`);
   assert.equal(car.ai, null);
   assert.equal(car.role, "stalled");
+});
+
+/** Put the player's car on the empty north ring road heading east at `speed` m/s. */
+function onOpenRoad(g: Game, car: SimCar, speed: number) {
+  g.cars = g.cars.filter((c) => c === car);
+  car.x = -100;
+  car.z = -84 + 1.75;
+  car.yaw = Math.PI / 2; // +x
+  car.yawRate = 0;
+  car.vx = speed;
+  car.vz = 0;
+  car.speed = speed;
+  car.y = 0;
+  car.airborne = false;
+}
+
+test("off the gas the car coasts down gradually and stops at exactly zero", () => {
+  const g = newGame();
+  const input = createInput();
+  const car = enterSpawnCar(g, input);
+  onOpenRoad(g, car, 14); // ~50 km/h
+  steps(g, input, 1);
+  assert.ok(car.speed > 11 && car.speed < 13.5, `gradual, not a brake (${car.speed.toFixed(2)} m/s after 1 s)`);
+  steps(g, input, 9);
+  assert.equal(car.speed, 0, "comes fully to rest");
+  steps(g, input, 2);
+  assert.ok(Math.hypot(car.vx, car.vz) < 1e-9, "and stays at rest");
+});
+
+test("letting go of reverse rolls the car to a stop instead of creeping backwards", () => {
+  const g = newGame();
+  const input = createInput();
+  const car = enterSpawnCar(g, input);
+  onOpenRoad(g, car, 0);
+  applyKey(input, "KeyS", true);
+  steps(g, input, 2);
+  applyKey(input, "KeyS", false);
+  const v0 = car.speed;
+  assert.ok(v0 < -3, `reversing (${v0.toFixed(2)} m/s)`);
+  let minSpeed = v0;
+  for (let i = 0; i < 4 / FIXED_DT; i++) {
+    stepGame(g, input, 0);
+    minSpeed = Math.min(minSpeed, car.speed);
+  }
+  assert.equal(car.speed, 0, "stopped");
+  assert.ok(minSpeed >= v0 - 1e-9, "never sped up backwards after release");
+});
+
+test("the handbrake stops the car faster than the brake pedal", () => {
+  const stopTime = (key: string) => {
+    const g = newGame();
+    const input = createInput();
+    const car = enterSpawnCar(g, input);
+    onOpenRoad(g, car, 20);
+    applyKey(input, key, true);
+    // Time to (almost) rest; S would then switch to reverse, which is correct.
+    let t = 0;
+    while (car.speed > 0.5 && t < 10) {
+      stepGame(g, input, 0);
+      t += FIXED_DT;
+    }
+    applyKey(input, key, false);
+    assert.ok(t < 10, `${key} stopped the car`);
+    return t;
+  };
+  const brake = stopTime("KeyS");
+  const handbrake = stopTime("Space");
+  assert.ok(handbrake < brake, `handbrake ${handbrake.toFixed(2)} s vs brake ${brake.toFixed(2)} s`);
 });

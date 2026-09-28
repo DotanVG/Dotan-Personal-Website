@@ -29,8 +29,6 @@ export type VehicleSpec = {
   brakeForce: number;
   /** Aerodynamic drag, N per (m/s)^2. */
   dragCoef: number;
-  /** Rolling resistance, N per m/s. */
-  rollingCoef: number;
   /** Maximum front wheel angle, rad. */
   maxSteer: number;
   /** Lateral tyre friction coefficient. */
@@ -56,7 +54,6 @@ export const VEHICLE_SPECS: Record<VehicleKind, VehicleSpec> = {
     reverseMaxSpeed: 8,
     brakeForce: 10500,
     dragCoef: 1.2,
-    rollingCoef: 18,
     maxSteer: 0.62,
     grip: 1.12,
     yawAccel: 9,
@@ -77,7 +74,6 @@ export const VEHICLE_SPECS: Record<VehicleKind, VehicleSpec> = {
     reverseMaxSpeed: 8,
     brakeForce: 13500,
     dragCoef: 1.25,
-    rollingCoef: 20,
     maxSteer: 0.58,
     grip: 1.08,
     yawAccel: 8,
@@ -98,7 +94,6 @@ export const VEHICLE_SPECS: Record<VehicleKind, VehicleSpec> = {
     reverseMaxSpeed: 8,
     brakeForce: 14000,
     dragCoef: 1.1,
-    rollingCoef: 16,
     maxSteer: 0.6,
     grip: 1.22,
     yawAccel: 10.5,
@@ -119,7 +114,6 @@ export const VEHICLE_SPECS: Record<VehicleKind, VehicleSpec> = {
     reverseMaxSpeed: 7,
     brakeForce: 17500,
     dragCoef: 1.8,
-    rollingCoef: 30,
     maxSteer: 0.55,
     grip: 0.96,
     yawAccel: 6,
@@ -140,7 +134,15 @@ export const STEER_GRIP_MARGIN = 1.55;
 export const LATERAL_STIFFNESS_PER_S = 9;
 export const HANDBRAKE_GRIP_FACTOR = 0.32;
 export const HANDBRAKE_YAW_GAIN = 1.45;
-export const HANDBRAKE_DECEL_MPS2 = 3.2;
+/** Locked rear wheels: the strongest stop (above every car's service brake), rear still slides. */
+export const HANDBRAKE_DECEL_MPS2 = 12;
+/** Below this speed the handbrake brings the car to rest almost at once. */
+export const HANDBRAKE_CREEP_MPS = 4;
+export const HANDBRAKE_CREEP_DECEL_MPS2 = 18;
+/** Off both pedals: engine braking coasts the car down gradually. */
+export const COAST_DECEL_MPS2 = 1.7;
+/** Rolling friction on any rolling car (scaled by surface), so it always comes to rest. */
+export const ROLLING_DECEL_MPS2 = 0.35;
 /** Seconds to regain full grip after releasing the handbrake. */
 export const GRIP_RECOVER_S = 0.35;
 /** Ground drops more than this under a grounded car → airborne. */
@@ -293,12 +295,14 @@ export function stepVehicle(car: Car, input: DriveInput, terrain: Terrain, dt: n
       const f = vLong < 0 ? Math.max(0, 1 - (vLong / spec.reverseMaxSpeed) ** 2) : 1;
       force += spec.reverseForce * propulsion * drive * f;
     }
-    force -= spec.dragCoef * vLong * Math.abs(vLong) + spec.rollingCoef * ground.drag * vLong;
+    force -= spec.dragCoef * vLong * Math.abs(vLong);
     vLong += (force / spec.mass) * dt;
 
-    // Brakes never reverse the direction of travel within a step.
-    let decel = (brake * spec.brakeForce) / spec.mass;
-    if (input.handbrake) decel += HANDBRAKE_DECEL_MPS2 + (Math.abs(vLong) < 3 ? 6 : 0);
+    // Brakes, engine braking and rolling friction never reverse the direction of
+    // travel within a step: they bring the car to exactly 0.
+    let decel = (brake * spec.brakeForce) / spec.mass + ROLLING_DECEL_MPS2 * ground.drag;
+    if (drive === 0 && brake === 0) decel += COAST_DECEL_MPS2;
+    if (input.handbrake) decel += Math.abs(vLong) < HANDBRAKE_CREEP_MPS ? HANDBRAKE_CREEP_DECEL_MPS2 : HANDBRAKE_DECEL_MPS2;
     if (onRoof || car.inWater) decel += 7;
     const dv = decel * dt;
     vLong = Math.abs(vLong) <= dv ? 0 : vLong - Math.sign(vLong) * dv;

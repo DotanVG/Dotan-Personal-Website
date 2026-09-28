@@ -516,6 +516,25 @@ function LookLayer({ input }: { input: InputState }) {
   const release = (e: React.PointerEvent) => {
     if (ptr.current?.id === e.pointerId) ptr.current = null;
   };
+  // A lift that lands elsewhere, or no fingers left on screen, also frees it.
+  useEffect(() => {
+    const onUp = (e: PointerEvent) => {
+      if (ptr.current?.id === e.pointerId) ptr.current = null;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) ptr.current = null;
+    };
+    window.addEventListener("pointerup", onUp, true);
+    window.addEventListener("pointercancel", onUp, true);
+    window.addEventListener("touchend", onTouchEnd, true);
+    window.addEventListener("touchcancel", onTouchEnd, true);
+    return () => {
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onUp, true);
+      window.removeEventListener("touchend", onTouchEnd, true);
+      window.removeEventListener("touchcancel", onTouchEnd, true);
+    };
+  }, []);
   return (
     <div
       className="absolute inset-0 z-10 touch-none"
@@ -523,7 +542,11 @@ function LookLayer({ input }: { input: InputState }) {
       onPointerDown={(e) => {
         if (ptr.current) return;
         if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
-        e.currentTarget.setPointerCapture(e.pointerId);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // pointer already ended; dragging still works without capture
+        }
         ptr.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
       }}
       onPointerMove={(e) => {

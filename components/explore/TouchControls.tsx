@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { stickValue, type InputState } from "@/lib/game/input";
 import { clamp } from "@/lib/game/math";
 import { cn } from "@/lib/cn";
@@ -8,6 +8,24 @@ import type { HudView } from "./uiStore";
 
 type StickValue = ReturnType<typeof stickValue>;
 const ZERO: StickValue = { x: 0, y: 0, mag: 0, knobX: 0, knobY: 0 };
+
+/**
+ * Active pointer id -> release function of the control holding it. Window-level
+ * listeners use it so a control is released even if its own pointerup /
+ * pointercancel / lostpointercapture never arrives (seen rarely on phones as a
+ * stuck gas pedal or steering until the controls remounted).
+ */
+type Owners = Map<number, () => void>;
+const OwnersContext = createContext<Owners>(new Map());
+
+/** Capture can throw if the pointer already ended; the control still works without it. */
+function capture(el: Element, pointerId: number) {
+  try {
+    el.setPointerCapture(pointerId);
+  } catch {
+    // ignored
+  }
+}
 
 /**
  * Floating thumb stick: the base appears where the thumb lands inside its zone.
@@ -33,6 +51,17 @@ function Stick({
   const [active, setActive] = useState(false);
   const onValueRef = useRef(onValue);
   onValueRef.current = onValue;
+  const owners = useContext(OwnersContext);
+  const release = useRef(() => {});
+  release.current = () => {
+    const p = ptr.current;
+    if (!p) return;
+    owners.delete(p.id);
+    ptr.current = null;
+    setActive(false);
+    placeIdleRef.current();
+    onValueRef.current(ZERO);
+  };
 
   // Idle ghost sits at the bottom-left of the zone so the thumb knows where to go.
   const placeIdle = () => {
@@ -51,16 +80,13 @@ function Stick({
     window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
+      release.current();
       onValueRef.current(ZERO);
     };
   }, []);
 
   const end = (e: React.PointerEvent) => {
-    if (ptr.current?.id !== e.pointerId) return;
-    ptr.current = null;
-    setActive(false);
-    placeIdle();
-    onValue(ZERO);
+    if (ptr.current?.id === e.pointerId) release.current();
   };
 
   return (
@@ -71,12 +97,13 @@ function Stick({
       onPointerDown={(e) => {
         if (ptr.current || !zone.current) return;
         e.preventDefault();
-        zone.current.setPointerCapture(e.pointerId);
+        capture(zone.current, e.pointerId);
         const r = zone.current.getBoundingClientRect();
         const pad = radius + 6;
         const ox = clamp(e.clientX - r.left, pad, Math.max(pad, r.width - pad));
         const oy = clamp(e.clientY - r.top, pad, Math.max(pad, r.height - pad));
         ptr.current = { id: e.pointerId, ox: r.left + ox, oy: r.top + oy };
+        owners.set(e.pointerId, () => release.current());
         if (base.current) base.current.style.transform = `translate(${ox - radius}px, ${oy - radius}px)`;
         setActive(true);
         const v = stickValue(e.clientX - ptr.current.ox, axis === "x" ? 0 : e.clientY - ptr.current.oy, radius);
@@ -134,12 +161,24 @@ function HoldButton({
   const [down, setDown] = useState(false);
   const cb = useRef(onChange);
   cb.current = onChange;
-  useEffect(() => () => cb.current(false), []);
-  const release = (e: React.PointerEvent) => {
-    if (ptr.current !== e.pointerId) return;
+  const owners = useContext(OwnersContext);
+  const releaseNow = useRef(() => {});
+  releaseNow.current = () => {
+    if (ptr.current === null) return;
+    owners.delete(ptr.current);
     ptr.current = null;
     setDown(false);
-    onChange(false);
+    cb.current(false);
+  };
+  useEffect(
+    () => () => {
+      releaseNow.current();
+      cb.current(false);
+    },
+    [],
+  );
+  const release = (e: React.PointerEvent) => {
+    if (ptr.current === e.pointerId) releaseNow.current();
   };
   return (
     <button
@@ -154,8 +193,9 @@ function HoldButton({
       onPointerDown={(e) => {
         if (ptr.current !== null) return;
         e.preventDefault();
-        e.currentTarget.setPointerCapture(e.pointerId);
+        capture(e.currentTarget, e.pointerId);
         ptr.current = e.pointerId;
+        owners.set(e.pointerId, () => releaseNow.current());
         setDown(true);
         onChange(true);
       }}
@@ -232,7 +272,36 @@ export function TouchControls({
     }, 150);
     return () => window.clearInterval(id);
   }, [input, epoch]);
-  return <Controls key={epoch} input={input} hud={hud} onUnstuck={onUnstuck} />;
+
+  // Safety net: a finger that lifts anywhere releases whatever it was holding, and
+  // when no finger is left on the screen nothing can still be pressed.
+  const owners = useMemo<Owners>(() => new Map(), []);
+  useEffect(() => {
+    const releaseAll = () => {
+      for (const release of [...owners.values()]) release();
+    };
+    const onUp = (e: PointerEvent) => owners.get(e.pointerId)?.();
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) releaseAll();
+    };
+    window.addEventListener("pointerup", onUp, true);
+    window.addEventListener("pointercancel", onUp, true);
+    window.addEventListener("touchend", onTouchEnd, true);
+    window.addEventListener("touchcancel", onTouchEnd, true);
+    return () => {
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onUp, true);
+      window.removeEventListener("touchend", onTouchEnd, true);
+      window.removeEventListener("touchcancel", onTouchEnd, true);
+      releaseAll();
+    };
+  }, [owners]);
+
+  return (
+    <OwnersContext.Provider value={owners}>
+      <Controls key={epoch} input={input} hud={hud} onUnstuck={onUnstuck} />
+    </OwnersContext.Provider>
+  );
 }
 
 function Controls({ input, hud, onUnstuck }: { input: InputState; hud: HudView; onUnstuck: () => void }) {

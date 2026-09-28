@@ -103,6 +103,42 @@ test("portrait phone: walk with the stick, enter by tapping, steer + gas togethe
     assert.equal(await page.locator("button[aria-label='Accelerate']").getAttribute("aria-pressed"), "false", "pedal not shown as pressed");
     await touch.up(9);
 
+    // Rare phone bug: a finger's release never reaches the control, leaving gas or
+    // steering held. Reproduce by pressing with a pointer whose lift lands elsewhere.
+    await page.evaluate(() => {
+      const gasBtn = document.querySelector("button[aria-label='Accelerate']");
+      gasBtn.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 77, pointerType: "touch", isPrimary: false, bubbles: true }));
+    });
+    await sleep(100);
+    assert.equal((await inputState(page)).touch.throttle, 1, "orphaned press holds the gas");
+    await page.evaluate(() => document.body.dispatchEvent(new PointerEvent("pointerup", { pointerId: 77, pointerType: "touch", bubbles: true })));
+    await sleep(100);
+    assert.equal((await inputState(page)).touch.throttle, 0, "a lift delivered elsewhere still releases the gas");
+    assert.equal(await page.locator("button[aria-label='Accelerate']").getAttribute("aria-pressed"), "false");
+    // Steering: press and drag, then the release is lost entirely; the moment no finger
+    // is left on the screen (touchend with no touches) the stick lets go.
+    await page.evaluate(() => {
+      const zone = document.querySelector("[data-touch-controls] [role=presentation]");
+      const r = zone.getBoundingClientRect();
+      const x = r.left + 80;
+      const y = r.bottom - 80;
+      zone.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 78, pointerType: "touch", clientX: x, clientY: y, isPrimary: false, bubbles: true }));
+      zone.dispatchEvent(new PointerEvent("pointermove", { pointerId: 78, pointerType: "touch", clientX: x + 60, clientY: y, isPrimary: false, bubbles: true }));
+    });
+    await sleep(100);
+    assert.ok((await inputState(page)).touch.steer > 0.5, "orphaned drag steers");
+    await page.evaluate(() => window.dispatchEvent(new TouchEvent("touchend", { touches: [], bubbles: true })));
+    await sleep(100);
+    assert.equal((await inputState(page)).touch.steer, 0, "no fingers on screen, no steering");
+    // And the stick still takes a fresh real touch afterwards.
+    await touch.down(11, 80, 740);
+    await touch.move(11, 150, 740);
+    await sleep(150);
+    assert.ok((await inputState(page)).touch.steer > 0.5, "stick works again");
+    await touch.up(11);
+    await sleep(100);
+    assert.equal((await inputState(page)).touch.steer, 0);
+
     // Drive for a moment and capture the portrait framing at speed.
     await touch.down(8, gas.cx, gas.cy);
     await sleep(2200);
