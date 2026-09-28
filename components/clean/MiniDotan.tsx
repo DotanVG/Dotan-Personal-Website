@@ -73,7 +73,10 @@ export function MiniDotan() {
   });
   const formStatus = useRef<ContactStatus>("idle");
   const hidden = state === "hidden";
+  // No ambient animation (hops, glances, idle cycles).
   const still = quiet || reduced || !visible;
+  // No unsolicited messages. Reduced motion alone doesn't silence him.
+  const mute = quiet || !visible;
 
   const finishDrag = useCallback((cancelled = false) => {
     const gesture = drag.current;
@@ -187,16 +190,12 @@ export function MiniDotan() {
   }, [finishDrag]);
 
   useEffect(() => {
-    if (
-      still &&
-      ["idle", "greeting", "hopping", "speaking"].includes(
-        current.current.state,
-      )
-    ) {
+    const now = current.current.state;
+    if (mute && ["idle", "greeting", "hopping", "speaking"].includes(now)) {
       setMessage("");
       setState("idle");
-    }
-  }, [still]);
+    } else if (still && now === "hopping") setState("idle");
+  }, [still, mute]);
 
   useEffect(() => {
     if (!ready) return;
@@ -246,7 +245,12 @@ export function MiniDotan() {
   useEffect(() => {
     if (!ready || hidden) return;
     paint();
-    if (still || settings) return;
+    if (settings) return;
+    if (walking && reduced) {
+      paint(cycles[walking].row, 0);
+      return;
+    }
+    if (still && !walking) return;
     const cycle = cycles[walking ?? (state as keyof typeof cycles)];
     if (!cycle) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -278,10 +282,10 @@ export function MiniDotan() {
     // Begin idle with a still pause; direct reactions play immediately.
     timer = setTimeout(frame, !walking && state === "idle" ? 6500 : 0);
     return () => clearTimeout(timer);
-  }, [state, still, hidden, ready, settings, walking]);
+  }, [state, still, reduced, hidden, ready, settings, walking]);
 
   useEffect(() => {
-    if (!ready || hidden || still) return;
+    if (!ready || hidden || mute) return;
     let intent = 0,
       lastScroll = 0,
       suppressUntil = 0,
@@ -387,7 +391,7 @@ export function MiniDotan() {
           now > suppressUntil &&
           !busy() &&
           ["idle", "greeting", "speaking"].includes(current.current.state);
-        const next = scrollGesture(gesture, position(), now, eligible);
+        const next = scrollGesture(gesture, position(), now, eligible && !still);
         gesture = next;
         if (next.hop) {
           messageUntil = 0;
@@ -419,7 +423,7 @@ export function MiniDotan() {
           setState("idle");
       }
       if (current.current.state !== "idle") return;
-      if (pointer && now - lastScroll > 350) {
+      if (pointer && !still && now - lastScroll > 350) {
         const rect = button.current?.getBoundingClientRect();
         if (rect) {
           pose = lookPose(
@@ -489,7 +493,7 @@ export function MiniDotan() {
       window.removeEventListener("resize", reset);
       window.visualViewport?.removeEventListener("resize", reset);
     };
-  }, [ready, hidden, still]);
+  }, [ready, hidden, still, mute]);
 
   useEffect(() => {
     if (!open) return;
@@ -563,7 +567,7 @@ export function MiniDotan() {
         </div>
         <ContactForm compact onStatusChange={statusChanged} />
       </div>
-      {!open && message && !still && (
+      {!open && message && !mute && (
         <div className={`${styles.bubble} ${styles.message}`}>
           <p>{message}</p>
           <button type="button" aria-label="Dismiss message" onClick={close}>
