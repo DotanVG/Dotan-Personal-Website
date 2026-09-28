@@ -114,12 +114,13 @@
   display: none;
 }
 /* Summoned: he jumps up out of the void below the screen while the button
-   whirls like a little hurricane, his face spiralling in and the dots out. */
+   whirls like a little hurricane: his head makes two full turns and lands
+   upright (0-800 ms), then shrinks into the eye as the dots grow out. */
 .dock[data-arriving] .pet {
   animation: arrive 850ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
 }
 .dock[data-arriving] .gear {
-  animation: whirl 900ms cubic-bezier(0.15, 0.6, 0.2, 1);
+  animation: whirl 800ms cubic-bezier(0.45, 0, 0.25, 1);
 }
 .dock[data-arriving] .gear::before {
   content: "";
@@ -137,10 +138,10 @@
   animation: vortex 900ms ease-out forwards;
 }
 .dock[data-arriving] .face {
-  animation: face-out 600ms cubic-bezier(0.55, 0, 0.8, 0.3) forwards;
+  animation: face-out 1100ms ease-in forwards;
 }
 .dock[data-arriving] .dots {
-  animation: dots-in 900ms ease-out both;
+  animation: dots-in 1100ms ease-out both;
 }
 @keyframes arrive {
   0% {
@@ -161,7 +162,7 @@
 }
 @keyframes whirl {
   to {
-    transform: rotate(1080deg);
+    transform: rotate(720deg);
   }
 }
 @keyframes vortex {
@@ -177,17 +178,23 @@
     transform: scale(1) rotate(-720deg);
   }
 }
+/* 73% of 1100 ms = just after the two turns land (800 ms). */
 @keyframes face-out {
-  to {
+  0%,
+  73% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
     opacity: 0;
-    transform: rotate(-540deg) scale(0);
+    transform: scale(0);
   }
 }
 @keyframes dots-in {
   0%,
-  40% {
+  73% {
     opacity: 0;
-    transform: rotate(-270deg) scale(0);
+    transform: rotate(-90deg) scale(0);
   }
   100% {
     opacity: 1;

@@ -257,7 +257,31 @@ test("hidden: a round face button stays; it summons him with a whirl", { timeout
     await pet.waitFor({ timeout: 2000 });
     assert.equal(await dock.getAttribute("data-arriving"), "true", "arrival animation running");
     assert.equal(await dock.getAttribute("data-state"), "hopping", "jumps in");
-    await sleep(1300);
+    // Freeze the whirl and check it: two full turns with the head intact, then dots.
+    const at = (t) =>
+      page.evaluate((t) => {
+        const anims = document.getAnimations();
+        anims.forEach((a) => {
+          a.pause();
+          a.currentTime = t;
+        });
+        const gear = document.querySelector("[data-mini-dotan] [class*=gear]");
+        const angle = (() => {
+          const m = new DOMMatrix(getComputedStyle(gear).transform);
+          return Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI);
+        })();
+        const opacity = (sel) => Number(getComputedStyle(gear.querySelector(sel)).opacity);
+        return { angle, face: opacity("[class*=face]"), dots: opacity("[class*=dots]") };
+      }, t);
+    const mid = await at(400),
+      landed = await at(800),
+      done = await at(1100);
+    await page.evaluate(() => document.getAnimations().forEach((a) => a.play()));
+    const whirl = JSON.stringify({ mid, landed, done });
+    assert.ok(Math.abs(mid.angle) > 20 && mid.face === 1, `mid-spin, head still whole (${whirl})`);
+    assert.ok(landed.angle === 0 && landed.face === 1 && landed.dots === 0, `two full turns, head upright (${whirl})`);
+    assert.ok(done.face === 0 && done.dots === 1, `then the dots (${whirl})`);
+    await sleep(1500);
     assert.equal(await dock.getAttribute("data-arriving"), null);
     assert.equal(await dock.locator("button[aria-label='Mini Dotan settings']").count(), 1, "back to the ··· menu");
     assert.equal(await page.evaluate(() => localStorage.getItem("mini-dotan-hidden")), "false");

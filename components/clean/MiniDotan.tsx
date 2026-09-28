@@ -271,7 +271,8 @@ export function MiniDotan() {
     if (current.current.state !== "hidden") return;
     clearTimeout(arriveTimer.current);
     setArriving(true);
-    arriveTimer.current = setTimeout(() => setArriving(false), 1000);
+    // Outlasts the 1.1 s whirl in MiniDotan.module.css.
+    arriveTimer.current = setTimeout(() => setArriving(false), 1200);
     setState(
       matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "idle"
