@@ -291,6 +291,53 @@ test("hidden: a round face button stays; it summons him with a whirl", { timeout
   }
 });
 
+/** data-state / data-arriving changes on the dock from the very first paint. */
+function recordDock() {
+  window.__dock = [];
+  new MutationObserver(() => {
+    const d = document.querySelector("[data-mini-dotan]");
+    if (!d) return;
+    const now = `${d.dataset.state}${d.dataset.arriving ? "+arriving" : ""}`;
+    if (window.__dock.at(-1) !== now) window.__dock.push(now);
+  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state", "data-arriving"] });
+}
+
+async function entrance(opts, init) {
+  const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true, ...opts });
+  try {
+    await page.addInitScript(recordDock);
+    if (init) await page.addInitScript(init);
+    await page.goto(BASE + "/", { waitUntil: "load" });
+    await page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']").waitFor({ timeout: 30000 });
+    await sleep(1800);
+    return {
+      states: await page.evaluate(() => window.__dock),
+      hiddenPref: await page.evaluate(() => localStorage.getItem("mini-dotan-hidden")),
+      errors: realErrors(logs),
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
+test("entrance: after load he jumps in from below with the face-button whirl", { timeout: 60000 }, async () => {
+  const r = await entrance({});
+  const s = JSON.stringify(r);
+  assert.equal(r.states[0], "hidden", `starts as the face button (${s})`);
+  assert.ok(r.states.includes("hopping+arriving"), `then jumps in with the whirl (${s})`);
+  assert.equal(r.states.at(-1), "idle", `and settles (${s})`);
+  assert.notEqual(r.hiddenPref, "true", "the visitor's hide setting isn't touched");
+  assert.deepEqual(r.errors, []);
+});
+
+test("entrance: skipped in quiet mode; reduced motion just appears", { timeout: 60000 }, async () => {
+  const quiet = await entrance({}, () => localStorage.setItem("mini-dotan-quiet", "true"));
+  assert.ok(!quiet.states.includes("hidden") && !quiet.states.some((x) => x.includes("hopping")), JSON.stringify(quiet));
+  const calm = await entrance({ reducedMotion: "reduce" });
+  assert.ok(!calm.states.some((x) => x.includes("hopping")), `no jump under reduced motion (${JSON.stringify(calm)})`);
+  assert.equal(calm.states.at(-1), "idle");
+});
+
 test("settings are just quiet mode and hide; arrow keys change corners", { timeout: 60000 }, async () => {
   const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
   try {

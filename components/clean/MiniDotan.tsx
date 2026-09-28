@@ -328,18 +328,40 @@ export function MiniDotan() {
 
 
   useEffect(() => {
-    setQuiet(preference("quiet"));
+    const quietly = preference("quiet");
+    setQuiet(quietly);
     setSide(preference("left") ? "left" : "right");
-    if (preference("hidden")) setState("hidden");
+    // Entrance: unless hidden or quiet, he starts as the face button and jumps
+    // in from below (the summon whirl) once the page has loaded and is on screen.
+    const entrance = !preference("hidden") && !quietly;
+    if (entrance || preference("hidden")) setState("hidden");
     setReady(true);
     if (DEBUG) setDebug(new URLSearchParams(location.search).has("mini-debug"));
-    const visibility = () => setVisible(!document.hidden);
+    let loaded = document.readyState === "complete",
+      timer: ReturnType<typeof setTimeout> | undefined;
+    const start = () => {
+      if (!entrance || timer || !loaded || document.hidden) return;
+      timer = setTimeout(summon, 600);
+    };
+    const load = () => {
+      loaded = true;
+      start();
+    };
+    const slow = setTimeout(load, 2500); // don't wait on a slow asset forever
+    const visibility = () => {
+      setVisible(!document.hidden);
+      start();
+    };
     visibility();
+    window.addEventListener("load", load);
     document.addEventListener("visibilitychange", visibility);
     return () => {
+      clearTimeout(timer);
+      clearTimeout(slow);
+      window.removeEventListener("load", load);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, []);
+  }, [summon]);
 
   useEffect(() => {
     // While dragged, moveDrag paints the walk itself.
