@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/resolve-ts.mjs --test tests/*.test.ts",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/resolve-ts.mjs --test tests/*.test.ts tests/*.test.mjs scripts/*.test.ts",
     "build:e2e": "node e2e/build.mjs",
     "test:e2e": "node --test --test-concurrency=1 e2e/*.spec.mjs"
   },
