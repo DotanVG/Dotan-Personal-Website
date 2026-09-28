@@ -6,6 +6,14 @@
   z-index: 45;
   pointer-events: none;
   color: rgb(var(--ink));
+  transform: translate(var(--drag-x, 0px), var(--drag-y, 0px));
+}
+.dock[data-side="left"] {
+  left: max(12px, env(safe-area-inset-left));
+  right: auto;
+}
+.dock[data-side="left"] .controls {
+  justify-content: flex-start;
 }
 .dock[hidden],
 .bubble[hidden] {
@@ -17,6 +25,9 @@
   align-items: flex-end;
 }
 .pet {
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   position: relative;
   width: calc(var(--height) * 0.64);
   height: var(--height);
@@ -121,6 +132,9 @@
   outline-offset: 3px;
 }
 @media (min-width: 768px) {
+  .dock[data-side="left"] {
+    left: max(24px, env(safe-area-inset-left));
+  }
   .dock {
     --height: 108px;
     right: max(24px, env(safe-area-inset-right));

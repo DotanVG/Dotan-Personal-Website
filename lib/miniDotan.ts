@@ -10,6 +10,8 @@ export type PetState =
   | "hidden";
 
 export const cycles = {
+  left: { row: 2, times: [120, 120, 120, 120, 120, 120, 120, 220] },
+  right: { row: 1, times: [120, 120, 120, 120, 120, 120, 120, 220] },
   idle: { row: 0, times: [280, 110, 110, 140, 140, 320] },
   greeting: { row: 3, times: [140, 140, 140, 280] },
   hopping: { row: 4, times: [140, 140, 140, 140, 280] },
@@ -17,6 +19,27 @@ export const cycles = {
   success: { row: 3, times: [140, 140, 140, 280] },
   error: { row: 5, times: [140, 140, 140, 140, 140, 140, 140, 240] },
 } as const;
+
+export function clampPetDrag(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  viewportWidth: number,
+  viewportHeight: number,
+  margin: number,
+) {
+  const left = Math.max(margin, Math.min(x, viewportWidth - width - margin));
+  const top = Math.max(72, Math.min(y, viewportHeight - height - margin));
+  return {
+    left,
+    top,
+    side:
+      left + width / 2 < viewportWidth / 2
+        ? ("left" as const)
+        : ("right" as const),
+  };
+}
 
 export function lookPose(
   dx: number,

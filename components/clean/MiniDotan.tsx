@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { ContactForm, type ContactStatus } from "./ContactForm";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import {
   cycles,
+  clampPetDrag,
   lookPose,
   scrollGesture,
   type PetState,
@@ -31,6 +38,26 @@ export function MiniDotan() {
   const [settings, setSettings] = useState(false);
   const [message, setMessage] = useState("");
   const [visible, setVisible] = useState(true);
+  const [side, setSide] = useState<"left" | "right">("right");
+  const [walking, setWalking] = useState<"left" | "right" | null>(null);
+  const drag = useRef<{
+    id: number;
+    startX: number;
+    startY: number;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+    lastX: number;
+    moved: boolean;
+  } | null>(null);
+  const dragFrame = useRef(0);
+  const walkPause = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const suppressClick = useRef(false);
   const reduced = useReducedMotion();
   const button = useRef<HTMLButtonElement>(null);
   const sprite = useRef<HTMLSpanElement>(null);
@@ -48,6 +75,117 @@ export function MiniDotan() {
   const hidden = state === "hidden";
   const still = quiet || reduced || !visible;
 
+  const finishDrag = useCallback((cancelled = false) => {
+    const gesture = drag.current;
+    if (!gesture) return;
+    drag.current = null;
+    cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = 0;
+    clearTimeout(walkPause.current);
+    setWalking(null);
+    dock.current?.style.removeProperty("--drag-x");
+    dock.current?.style.removeProperty("--drag-y");
+    if (gesture.moved) {
+      suppressClick.current = true;
+      if (!cancelled) {
+        const viewport = window.visualViewport;
+        const next = clampPetDrag(
+          gesture.x,
+          gesture.y,
+          gesture.width,
+          gesture.height,
+          viewport?.width ?? innerWidth,
+          viewport?.height ?? innerHeight,
+          24,
+        );
+        setSide(next.side);
+        preference("left", next.side === "left");
+      }
+    }
+  }, []);
+
+  function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    suppressClick.current = false;
+    if (
+      !event.isPrimary ||
+      event.button !== 0 ||
+      open ||
+      formStatus.current === "submitting"
+    )
+      return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    drag.current = {
+      id: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+      width: rect.width + 44,
+      height: rect.height,
+      x: rect.left,
+      y: rect.top,
+      lastX: event.clientX,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const gesture = drag.current;
+    if (!gesture || gesture.id !== event.pointerId) return;
+    const dx = event.clientX - gesture.startX,
+      dy = event.clientY - gesture.startY;
+    if (!gesture.moved && Math.hypot(dx, dy) < 12) return;
+    if (!gesture.moved) {
+      gesture.moved = true;
+      setMessage("");
+      setSettings(false);
+      setState("idle");
+    }
+    const viewport = window.visualViewport;
+    const next = clampPetDrag(
+      gesture.left + dx,
+      gesture.top + dy,
+      gesture.width,
+      gesture.height,
+      viewport?.width ?? innerWidth,
+      viewport?.height ?? innerHeight,
+      24,
+    );
+    gesture.x = next.left;
+    gesture.y = next.top;
+    const horizontal = event.clientX - gesture.lastX;
+    if (Math.abs(horizontal) > 2) {
+      setWalking(horizontal < 0 ? "left" : "right");
+      gesture.lastX = event.clientX;
+    }
+    clearTimeout(walkPause.current);
+    walkPause.current = setTimeout(() => setWalking(null), 160);
+    if (!dragFrame.current)
+      dragFrame.current = requestAnimationFrame(() => {
+        dragFrame.current = 0;
+        if (drag.current !== gesture) return;
+        dock.current?.style.setProperty(
+          "--drag-x",
+          `${gesture.x - gesture.left}px`,
+        );
+        dock.current?.style.setProperty(
+          "--drag-y",
+          `${gesture.y - gesture.top}px`,
+        );
+      });
+  }
+
+  useEffect(() => {
+    const cancel = () => finishDrag(true);
+    window.addEventListener("blur", cancel);
+    return () => {
+      window.removeEventListener("blur", cancel);
+      cancelAnimationFrame(dragFrame.current);
+      clearTimeout(walkPause.current);
+    };
+  }, [finishDrag]);
+
   useEffect(() => {
     if (
       still &&
@@ -64,6 +202,7 @@ export function MiniDotan() {
     if (!ready) return;
     const viewport = window.visualViewport;
     const resize = () => {
+      finishDrag(true);
       const height = viewport?.height ?? innerHeight;
       dock.current?.style.setProperty("--available-height", `${height}px`);
       dock.current?.style.setProperty(
@@ -78,7 +217,7 @@ export function MiniDotan() {
       viewport?.removeEventListener("resize", resize);
       viewport?.removeEventListener("scroll", resize);
     };
-  }, [ready]);
+  }, [ready, finishDrag]);
 
   function paint(row = 0, col = 0) {
     sprite.current?.style.setProperty("--row", String(row));
@@ -87,6 +226,7 @@ export function MiniDotan() {
 
   useEffect(() => {
     setQuiet(preference("quiet"));
+    setSide(preference("left") ? "left" : "right");
     if (preference("hidden")) setState("hidden");
     setReady(true);
     const show = () => {
@@ -107,12 +247,13 @@ export function MiniDotan() {
     if (!ready || hidden) return;
     paint();
     if (still || settings) return;
-    const cycle = cycles[state as keyof typeof cycles];
+    const cycle = cycles[walking ?? (state as keyof typeof cycles)];
     if (!cycle) return;
     let timer: ReturnType<typeof setTimeout>;
     let col = 0;
     const frame = () => {
       if (
+        !walking &&
         state === "idle" &&
         Number(sprite.current?.style.getPropertyValue("--row")) >= 9
       ) {
@@ -123,10 +264,10 @@ export function MiniDotan() {
       timer = setTimeout(() => {
         col++;
         if (col < cycle.times.length) frame();
-        else if (state === "idle" || state === "submitting") {
+        else if (walking || state === "idle" || state === "submitting") {
           col = 0;
           paint();
-          timer = setTimeout(frame, state === "idle" ? 6500 : 0);
+          timer = setTimeout(frame, !walking && state === "idle" ? 6500 : 0);
         } else {
           paint();
           if (state === "greeting") setState("speaking");
@@ -135,9 +276,9 @@ export function MiniDotan() {
       }, cycle.times[col]);
     };
     // Begin idle with a still pause; direct reactions play immediately.
-    timer = setTimeout(frame, state === "idle" ? 6500 : 0);
+    timer = setTimeout(frame, !walking && state === "idle" ? 6500 : 0);
     return () => clearTimeout(timer);
-  }, [state, still, hidden, ready, settings]);
+  }, [state, still, hidden, ready, settings, walking]);
 
   useEffect(() => {
     if (!ready || hidden || still) return;
@@ -159,6 +300,7 @@ export function MiniDotan() {
     const candidates = new Map<string, number>();
     const fine = matchMedia("(hover: hover) and (pointer: fine)");
     const busy = () =>
+      !!drag.current ||
       current.current.open ||
       current.current.settings ||
       !!document.activeElement?.closest(
@@ -390,12 +532,14 @@ export function MiniDotan() {
       ref={dock}
       data-mini-dotan
       data-state={state}
+      data-side={side}
       className={styles.dock}
       hidden={hidden}
       aria-label="Mini Dotan companion"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
+          finishDrag(true);
           close();
         }
       }}
@@ -429,6 +573,19 @@ export function MiniDotan() {
       )}
       {!open && settings && (
         <div className={`${styles.bubble} ${styles.settings}`}>
+          <p className="px-2 py-2 text-xs text-ink/60">
+            Drag Mini Dotan to either bottom corner, or use this button.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const next = side === "right" ? "left" : "right";
+              setSide(next);
+              preference("left", next === "left");
+            }}
+          >
+            Move to {side === "right" ? "left" : "right"} corner
+          </button>
           <button
             type="button"
             aria-pressed={quiet}
@@ -465,8 +622,24 @@ export function MiniDotan() {
           aria-label="Contact Dotan"
           aria-expanded={open}
           aria-controls="mini-dotan-contact"
+          aria-describedby="mini-dotan-drag-help"
           className={styles.pet}
-          onClick={() => {
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={(event) => {
+            if (drag.current?.id === event.pointerId) finishDrag();
+          }}
+          onPointerCancel={(event) => {
+            if (drag.current?.id === event.pointerId) finishDrag(true);
+          }}
+          onLostPointerCapture={(event) => {
+            if (drag.current?.id === event.pointerId) finishDrag(true);
+          }}
+          onClick={(event) => {
+            if (event.detail !== 0 && suppressClick.current) {
+              suppressClick.current = false;
+              return;
+            }
             setMessage("");
             setSettings(false);
             setOpen(true);
@@ -478,6 +651,10 @@ export function MiniDotan() {
           }}
         >
           <span ref={sprite} className={styles.sprite} aria-hidden="true" />
+          <span id="mini-dotan-drag-help" className="sr-only">
+            Tap to contact Dotan. Drag to either bottom corner, or move using
+            Mini Dotan settings.
+          </span>
         </button>
         {!open && state !== "submitting" && (
           <button

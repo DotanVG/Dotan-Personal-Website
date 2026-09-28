@@ -35,3 +35,26 @@ Browser checks performed against the production build:
 Real iOS/Android software keyboards were not available; visual-viewport resize
 handling is implemented, and constrained viewport layout was checked in Chromium.
 The build retains the existing unrelated Open Graph image lint warning.
+
+Drag-and-drop follow-up
+-----------------------
+
+The pet supports touch, mouse and pen dragging after 12px of movement, then docks
+at the nearest bottom corner. The selected side is a storage-safe boolean.
+Settings offer the equivalent move button without requiring dragging. Open forms
+and pending submissions cannot be dragged. Quiet/reduced-motion users can still
+place the pet manually, without locomotion animation.
+
+The dependency-free browser regression test uses Chromium CDP to generate actual
+touch events. With the production preview on port 3009 and an automation browser
+open, run:
+
+```sh
+node tests/mini-dotan-drag.browser.mjs <browser-CDP-websocket-URL>
+```
+
+Use an isolated browser session: the test resets the three pet preferences and
+sets a 393×852 touch viewport. It checks both walking rows, drop click suppression,
+touch cancellation, small finger jitter, quiet-mode placement, page scroll
+isolation and tapping contact after a drag. Walking rows 1 and 2 were also visually
+inspected at 88px and 108px. This is Chromium touch emulation, not a physical iPhone.

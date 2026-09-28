@@ -1,6 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cycles, lookPose, scrollGesture } from "../lib/miniDotan.ts";
+import {
+  clampPetDrag,
+  cycles,
+  lookPose,
+  scrollGesture,
+} from "../lib/miniDotan.ts";
+
+test("mobile drag stays within the viewport and selects the nearest dock", () => {
+  assert.deepEqual(clampPetDrag(-100, -100, 100, 88, 320, 568, 24), {
+    left: 24,
+    top: 72,
+    side: "left",
+  });
+  assert.deepEqual(clampPetDrag(900, 900, 100, 88, 320, 568, 24), {
+    left: 196,
+    top: 456,
+    side: "right",
+  });
+  assert.equal(clampPetDrag(60, 200, 100, 88, 390, 844, 24).side, "left");
+  assert.equal(clampPetDrag(240, 200, 100, 88, 390, 844, 24).side, "right");
+});
 
 test("direction convention, neutral deadzone and angular hysteresis", () => {
   assert.equal(lookPose(0, -100, null), 0);
@@ -35,6 +55,10 @@ test("only documented animation cells and timings", () => {
   assert.equal(cycles.hopping.times.length, 5);
   assert.equal(cycles.submitting.row, 7);
   assert.equal(cycles.error.row, 5);
+  assert.equal(cycles.left.row, 2);
+  assert.equal(cycles.right.row, 1);
+  assert.deepEqual(cycles.left.times, [120, 120, 120, 120, 120, 120, 120, 220]);
+  assert.deepEqual(cycles.left.times, cycles.right.times);
   for (const cycle of Object.values(cycles)) {
     assert.ok(cycle.times.length <= 8);
     assert.ok(cycle.times.every((time) => time > 0));
