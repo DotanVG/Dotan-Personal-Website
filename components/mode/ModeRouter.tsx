@@ -5,11 +5,15 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { useApp } from "@/lib/store";
 import { LoadingScreen } from "@/components/explore/LoadingScreen";
+import { MiniDotan } from "@/components/clean/MiniDotan";
 
-const ExploreScene = dynamic(() => import("@/components/explore/ExploreScene"), {
-  ssr: false,
-  loading: () => <LoadingScreen />,
-});
+const ExploreScene = dynamic(
+  () => import("@/components/explore/ExploreScene"),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen />,
+  },
+);
 
 export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   const mode = useApp((s) => s.mode);
@@ -41,14 +45,17 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   // Enter fades only: an exit animation under AnimatePresence "wait" never completed
   // (nested presence in the clean tree), which stranded in-page mode switches.
   return mode === "clean" ? (
-    <motion.div
-      key="clean"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {cleanContent}
-    </motion.div>
+    <>
+      <MiniDotan />
+      <motion.div
+        key="clean"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {cleanContent}
+      </motion.div>
+    </>
   ) : (
     <motion.div
       key="explore"

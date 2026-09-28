@@ -1,0 +1,129 @@
+.dock {
+  --height: 88px;
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--keyboard, 0px));
+  z-index: 45;
+  pointer-events: none;
+  color: rgb(var(--ink));
+}
+.dock[hidden],
+.bubble[hidden] {
+  display: none;
+}
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+.pet {
+  position: relative;
+  width: calc(var(--height) * 0.64);
+  height: var(--height);
+  pointer-events: auto;
+  border-radius: 22px;
+}
+.sprite {
+  --row: 0;
+  --col: 0;
+  position: absolute;
+  pointer-events: none;
+  width: calc(var(--height) * 192 / 208);
+  height: var(--height);
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  background-image: url("/pets/mini-dotan/spritesheet.webp");
+  background-size: calc(var(--height) * 1536 / 208) calc(var(--height) * 11);
+  background-position: calc(var(--col) * var(--height) * -192 / 208)
+    calc(var(--row) * var(--height) * -1);
+  background-repeat: no-repeat;
+}
+.gear {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 22px;
+  background: rgb(var(--canvas) / 0.92);
+  border: 1px solid rgb(var(--line));
+}
+.bubble {
+  pointer-events: auto;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(var(--available-height, 100dvh) - var(--height) - 100px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin-bottom: 12px;
+  border: 1px solid rgb(var(--line));
+  border-radius: 22px;
+  background: rgb(var(--canvas-raised));
+  box-shadow: 0 12px 45px rgb(0 0 0 / 0.16);
+}
+.heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgb(var(--canvas-raised));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 12px 0 16px;
+}
+.heading strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: 20px;
+}
+.heading p {
+  font-size: 12px;
+  opacity: 0.65;
+  margin-top: 3px;
+}
+.heading button,
+.message button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  border-radius: 50%;
+}
+.message {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 4px 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  width: min(290px, calc(100vw - 24px));
+}
+.settings {
+  width: 220px;
+  padding: 8px;
+  margin-left: auto;
+}
+.settings button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.settings button:hover {
+  background: rgb(var(--canvas-inset));
+}
+.settings span {
+  opacity: 0.65;
+}
+.dock button:focus-visible {
+  outline: 2px solid rgb(var(--ink));
+  outline-offset: 3px;
+}
+@media (min-width: 768px) {
+  .dock {
+    --height: 108px;
+    right: max(24px, env(safe-area-inset-right));
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + var(--keyboard, 0px));
+  }
+}
