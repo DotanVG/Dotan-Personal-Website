@@ -535,10 +535,15 @@ export function MiniDotan() {
       intent = performance.now();
       lastActivity = intent;
     };
-    const click = (event: Event) => {
+    const press = () => {
       lastActivity = performance.now();
       pointer = null;
       if (!finger) neutral(); // a tap's glance outlives its click
+    };
+    const click = (event: Event) => {
+      press();
+      // An in-page link scrolls the page itself: no hop for that. Only on a real
+      // click; a swipe that merely starts on such a link is the visitor scrolling.
       if ((event.target as Element)?.closest?.('a[href*="#"]')) {
         suppressUntil = performance.now() + 1800;
         reset();
@@ -734,7 +739,7 @@ export function MiniDotan() {
     window.addEventListener("touchend", touchEnd, { passive: true });
     window.addEventListener("touchcancel", touchEnd, { passive: true });
     window.addEventListener("keydown", userIntent);
-    window.addEventListener("pointerdown", click, { passive: true });
+    window.addEventListener("pointerdown", press, { passive: true });
     window.addEventListener("click", click);
     window.addEventListener("resize", reset);
     window.visualViewport?.addEventListener("resize", reset);
@@ -751,7 +756,7 @@ export function MiniDotan() {
       window.removeEventListener("touchend", touchEnd);
       window.removeEventListener("touchcancel", touchEnd);
       window.removeEventListener("keydown", userIntent);
-      window.removeEventListener("pointerdown", click);
+      window.removeEventListener("pointerdown", press);
       window.removeEventListener("click", click);
       window.removeEventListener("resize", reset);
       window.visualViewport?.removeEventListener("resize", reset);

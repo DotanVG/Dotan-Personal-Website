@@ -41,6 +41,7 @@ async function observe(opts, init) {
 /** Tap, then hold-and-scroll, somewhere above-left of him; record what he does. */
 async function glances(opts, init) {
   const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true, ...opts, init });
+  let watch;
   try {
     await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
     await page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']").waitFor({ timeout: 30000 });
@@ -57,7 +58,7 @@ async function glances(opts, init) {
     assert.ok(spot, "found a non-interactive spot to tap");
     const touch = await touchSession(page);
     const states = new Set();
-    const watch = setInterval(() => {
+    watch = setInterval(() => {
       page.evaluate(() => document.querySelector("[data-mini-dotan]")?.dataset.state).then((s) => states.add(s), () => {});
     }, 60);
 
@@ -87,6 +88,7 @@ async function glances(opts, init) {
     clearInterval(watch);
     return { spot, tap, afterTap, held, poses: [...poses], scrolled, afterScroll, hopped: states.has("hopping"), errors: realErrors(logs) };
   } finally {
+    clearInterval(watch);
     await browser.close();
   }
 }
@@ -133,6 +135,45 @@ test("reduce: a tap gets a glance; a scroll, which can't hop, gets one held glan
   assert.equal(r.hopped, false, `no hop under reduced motion (${detail})`);
   assert.ok(r.afterScroll[0] < 9, `settles once the page stops (${detail})`);
   assert.deepEqual(r.errors, []);
+});
+
+test("a swipe that starts on an in-page link still hops; tapping the link doesn't", { timeout: 60000 }, async () => {
+  const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true });
+  let watch;
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const dock = page.locator("[data-mini-dotan]");
+    await dock.locator("button[aria-label='Contact Dotan']").waitFor({ timeout: 30000 });
+    await sleep(1500);
+    const link = page.getByRole("link", { name: /get in touch/i }).first();
+    const l = await link.boundingBox();
+    const states = [];
+    watch = setInterval(() => dock.getAttribute("data-state").then((s) => states.push(s), () => {}), 50);
+    const touch = await touchSession(page);
+    await touch.down(1, l.x + l.width / 2, l.y + l.height / 2);
+    for (let i = 1; i <= 12; i++) {
+      await touch.move(1, l.x + l.width / 2, l.y + l.height / 2 - i * 30);
+      await sleep(60);
+    }
+    await touch.up(1);
+    await sleep(1200);
+    const swiped = states.includes("hopping");
+    states.length = 0;
+    await sleep(3500); // past the hop cooldown
+    await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+    await sleep(300);
+    await link.tap();
+    await sleep(2000);
+    clearInterval(watch);
+    const scrolledTo = await page.evaluate(() => scrollY);
+    assert.equal(swiped, true, "swipe from a link hops");
+    assert.ok(scrolledTo > 500, "the tap followed the link");
+    assert.equal(states.includes("hopping"), false, "no hop for the link's own scroll");
+    assert.deepEqual(realErrors(logs), []);
+  } finally {
+    clearInterval(watch);
+    await browser.close();
+  }
 });
 
 test("touch drag holds him above the finger; release glides into the corner", { timeout: 60000 }, async () => {
