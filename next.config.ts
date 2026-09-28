@@ -15,6 +15,9 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Always inlined, so the Explore test hook compiles out of normal builds
+  // (only `npm run build:e2e` sets it).
+  env: { EXPLORE_TEST_HOOK: process.env.EXPLORE_TEST_HOOK === "1" ? "1" : "0" },
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],

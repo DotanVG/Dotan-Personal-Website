@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
 import { Button } from "@/components/ui/Button";
@@ -120,12 +119,13 @@ export function Hero() {
                 See my work
               </Button>
             </Magnetic>
-            <Link
+            {/* Full navigation: Explore reads ?mode on load (a soft Link never switched modes). */}
+            <a
               href="?mode=explore"
               className="ml-2 text-sm text-ink/60 underline-offset-4 hover:text-ink hover:underline"
             >
               Or enter Explore mode →
-            </Link>
+            </a>
           </motion.div>
         </div>
       </div>
