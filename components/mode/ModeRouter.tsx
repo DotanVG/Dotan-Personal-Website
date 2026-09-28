@@ -5,11 +5,15 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/store";
 import { LoadingScreen } from "@/components/explore/LoadingScreen";
+import { MiniDotan } from "@/components/clean/MiniDotan";
 
-const ExploreScene = dynamic(() => import("@/components/explore/ExploreScene"), {
-  ssr: false,
-  loading: () => <LoadingScreen />,
-});
+const ExploreScene = dynamic(
+  () => import("@/components/explore/ExploreScene"),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen />,
+  },
+);
 
 export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   const mode = useApp((s) => s.mode);
@@ -39,28 +43,31 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {mode === "clean" ? (
-        <motion.div
-          key="clean"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {cleanContent}
-        </motion.div>
-      ) : (
-        <motion.div
-          key="explore"
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <ExploreScene />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      {mode === "clean" && <MiniDotan />}
+      <AnimatePresence mode="wait">
+        {mode === "clean" ? (
+          <motion.div
+            key="clean"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {cleanContent}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="explore"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <ExploreScene />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
