@@ -21,8 +21,6 @@ export const experience: Experience[] = [
       "Work within Agile cycles, adapting to evolving project needs and ensuring timely delivery.",
       "Tooling: Jira, Postman, Trello, Salesforce, Confluence.",
     ],
-    exploreBuilding: "tower",
-    position: [22, 0],
   },
   {
     slug: "ness",
@@ -38,8 +36,6 @@ export const experience: Experience[] = [
       "Conduct training sessions for administrative staff to ensure they can use the system effectively.",
       "Provide ongoing support to maintain seamless day-to-day operations.",
     ],
-    exploreBuilding: "block",
-    position: [16, 14],
   },
   {
     slug: "kanomi",
@@ -56,8 +52,6 @@ export const experience: Experience[] = [
       "Built feature-rich C# WPF applications, branded Chromium browsers, and Chrome extensions with Vite and JavaScript.",
       "Worked across the full stack: front-end, back-end, database management, and server configuration, to ship high-performance solutions.",
     ],
-    exploreBuilding: "pavilion",
-    position: [-16, 14],
   },
   {
     slug: "electra",
@@ -73,7 +67,5 @@ export const experience: Experience[] = [
       "Surveillance and intrusion alarms, fire detection and extinguishing, CCTV and digital recording.",
       "Access-control systems and control rooms.",
     ],
-    exploreBuilding: "shed",
-    position: [-16, -14],
   },
 ];

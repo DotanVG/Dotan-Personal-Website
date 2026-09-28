@@ -37,8 +37,6 @@ export type Experience = {
   logoAspect?: number;
   bullets: string[];
   blurb?: string;
-  exploreBuilding?: ExploreBuildingType;
-  position: [number, number];
 };
 
 export type Education = {
@@ -51,19 +49,7 @@ export type Education = {
   logoAspect?: number;
   bullets: string[];
   blurb?: string;
-  exploreBuilding?: ExploreBuildingType;
-  position: [number, number];
 };
-
-export type ExploreBuildingType =
-  | "tower"
-  | "block"
-  | "pavilion"
-  | "shed"
-  | "academy"
-  | "lighthouse"
-  | "glassCube"
-  | "brickBlock";
 
 export type Project = {
   slug: string;
