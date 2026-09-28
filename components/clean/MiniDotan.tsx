@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -13,6 +14,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import {
   cycles,
   clampPetDrag,
+  liftTarget,
   lookPose,
   scrollGesture,
   startWalk,
@@ -49,6 +51,7 @@ export function MiniDotan() {
   const [visible, setVisible] = useState(true);
   const [side, setSide] = useState<"left" | "right">("right");
   const [dragging, setDragging] = useState(false);
+  const [arriving, setArriving] = useState(false);
   const drag = useRef<{
     id: number;
     startX: number;
@@ -63,14 +66,24 @@ export function MiniDotan() {
     lastY: number;
     walk: Walk;
     moved: boolean;
+    // Touch: held above the finger instead of under it (mouse drags don't lift).
+    lift: boolean;
+    liftAt: number;
+    gx: number; // where he'd be without the lift, to rise from
+    gy: number;
   } | null>(null);
   const dragFrame = useRef(0);
+  const glideFrom = useRef<DOMRect | null>(null);
+  const arriveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const walkPause = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
   const suppressClick = useRef(false);
   const reduced = useReducedMotion();
   const button = useRef<HTMLButtonElement>(null);
+  const gear = useRef<HTMLButtonElement>(null);
   const sprite = useRef<HTMLSpanElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLElement>(null);
@@ -100,6 +113,10 @@ export function MiniDotan() {
     dragFrame.current = 0;
     clearTimeout(walkPause.current);
     setDragging(false);
+    // A lifted (touch) drag glides into its corner from here; see the layout effect.
+    if (gesture.moved && gesture.lift)
+      glideFrom.current = button.current?.getBoundingClientRect() ?? null;
+    dock.current?.removeAttribute("data-lifted");
     dock.current?.style.removeProperty("--drag-x");
     dock.current?.style.removeProperty("--drag-y");
     if (gesture.moved) {
@@ -131,13 +148,15 @@ export function MiniDotan() {
     )
       return;
     const rect = event.currentTarget.getBoundingClientRect();
+    const lift = event.pointerType !== "mouse";
     drag.current = {
       id: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       left: rect.left,
       top: rect.top,
-      width: rect.width + 44,
+      // The settings button travels along, except when lifted (it hides then).
+      width: rect.width + (lift ? 0 : 44),
       height: rect.height,
       x: rect.left,
       y: rect.top,
@@ -145,6 +164,10 @@ export function MiniDotan() {
       lastY: event.clientY,
       walk: startWalk(1),
       moved: false,
+      lift,
+      liftAt: 0,
+      gx: rect.left,
+      gy: rect.top,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -162,6 +185,10 @@ export function MiniDotan() {
       setSettings(false);
       setState("idle");
       setDragging(true);
+      if (gesture.lift) {
+        gesture.liftAt = performance.now();
+        dock.current?.setAttribute("data-lifted", "");
+      }
     } else
       gesture.walk = walkStep(
         gesture.walk,
@@ -172,15 +199,22 @@ export function MiniDotan() {
     gesture.lastX = event.clientX;
     gesture.lastY = event.clientY;
     const viewport = window.visualViewport;
-    const next = clampPetDrag(
+    const vw = viewport?.width ?? innerWidth,
+      vh = viewport?.height ?? innerHeight;
+    const grab = clampPetDrag(
       gesture.left + dx,
       gesture.top + dy,
       gesture.width,
       gesture.height,
-      viewport?.width ?? innerWidth,
-      viewport?.height ?? innerHeight,
+      vw,
+      vh,
       24,
     );
+    const next = gesture.lift
+      ? liftTarget(event.clientX, event.clientY, gesture.width, gesture.height, vw, vh)
+      : grab;
+    gesture.gx = grab.left;
+    gesture.gy = grab.top;
     gesture.x = next.left;
     gesture.y = next.top;
     // Painted directly: one React render per drag, not one per frame.
@@ -193,20 +227,57 @@ export function MiniDotan() {
         () => drag.current === gesture && paint(walk.dir > 0 ? 9 : 10, 4),
         150,
       );
-    if (!dragFrame.current)
-      dragFrame.current = requestAnimationFrame(() => {
-        dragFrame.current = 0;
-        if (drag.current !== gesture) return;
-        dock.current?.style.setProperty(
-          "--drag-x",
-          `${gesture.x - gesture.left}px`,
-        );
-        dock.current?.style.setProperty(
-          "--drag-y",
-          `${gesture.y - gesture.top}px`,
-        );
-      });
+    const place = () => {
+      dragFrame.current = 0;
+      if (drag.current !== gesture) return;
+      let { x, y } = gesture;
+      if (gesture.lift) {
+        // Rise from under the finger to above it: 140 ms ease-out, finishing
+        // even if the finger stops. Reduced motion: straight there.
+        const p = reduced
+          ? 1
+          : Math.min(1, (performance.now() - gesture.liftAt) / 140);
+        const e = 1 - (1 - p) ** 3;
+        x = gesture.gx + (x - gesture.gx) * e;
+        y = gesture.gy + (y - gesture.gy) * e;
+        if (p < 1) dragFrame.current = requestAnimationFrame(place);
+      }
+      dock.current?.style.setProperty("--drag-x", `${x - gesture.left}px`);
+      dock.current?.style.setProperty("--drag-y", `${y - gesture.top}px`);
+    };
+    if (!dragFrame.current) dragFrame.current = requestAnimationFrame(place);
   }
+
+  // Glide a released touch drag from where he was held into the corner (FLIP).
+  useLayoutEffect(() => {
+    const from = glideFrom.current;
+    glideFrom.current = null;
+    const to = button.current?.getBoundingClientRect();
+    if (!from || !to || reduced) return;
+    dock.current?.animate(
+      [
+        {
+          transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)`,
+        },
+        { transform: "none" },
+      ],
+      { duration: 200, easing: "cubic-bezier(0.2, 0, 0, 1)" },
+    );
+  }, [side, dragging, reduced]);
+
+  /** Back from hidden: he jumps up from below the screen; the button whirls. */
+  const summon = useCallback(() => {
+    preference("hidden", false);
+    if (current.current.state !== "hidden") return;
+    clearTimeout(arriveTimer.current);
+    setArriving(true);
+    arriveTimer.current = setTimeout(() => setArriving(false), 1000);
+    setState(
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "idle"
+        : "hopping",
+    );
+  }, []);
 
   useEffect(() => {
     const cancel = () => finishDrag(true);
@@ -215,6 +286,7 @@ export function MiniDotan() {
       window.removeEventListener("blur", cancel);
       cancelAnimationFrame(dragFrame.current);
       clearTimeout(walkPause.current);
+      clearTimeout(arriveTimer.current);
     };
   }, [finishDrag]);
 
@@ -260,19 +332,15 @@ export function MiniDotan() {
     if (preference("hidden")) setState("hidden");
     setReady(true);
     if (DEBUG) setDebug(new URLSearchParams(location.search).has("mini-debug"));
-    const show = () => {
-      preference("hidden", false);
-      if (current.current.state === "hidden") setState("idle");
-    };
     const visibility = () => setVisible(!document.hidden);
     visibility();
-    window.addEventListener("mini-dotan-show", show);
+    window.addEventListener("mini-dotan-show", summon);
     document.addEventListener("visibilitychange", visibility);
     return () => {
-      window.removeEventListener("mini-dotan-show", show);
+      window.removeEventListener("mini-dotan-show", summon);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, []);
+  }, [summon]);
 
   useEffect(() => {
     // While dragged, moveDrag paints the walk itself.
@@ -367,9 +435,8 @@ export function MiniDotan() {
       y: number;
       x0: number;
       y0: number;
-      v: number; // finger speed, px/ms
-      at: number;
       down: boolean;
+      scrolling: boolean; // moved past tap slop: a scroll, not a tap
       tap: boolean;
       lift: number;
       follow: boolean; // first gesture of a scroll session
@@ -378,12 +445,6 @@ export function MiniDotan() {
       posed = -Infinity;
     let raf = 0;
     let messageUntil = 0;
-    let lastY = window.scrollY,
-      speed = 0,
-      session = 0, // px scrolled this session (ends after 2.5 s without scrolling)
-      sessionHopped = false,
-      lastHop = -Infinity,
-      endHopped = false;
     const candidates = new Map<string, number>();
     const fine = matchMedia("(hover: hover) and (pointer: fine)");
     const coarse = matchMedia("(pointer: coarse)");
@@ -429,10 +490,8 @@ export function MiniDotan() {
       pose = null;
       clearLook();
     };
-    const hop = (now: number) => {
+    const hop = () => {
       if (DEBUG) diag.current.hops++;
-      lastHop = now;
-      sessionHopped = true;
       messageUntil = 0;
       setMessage("");
       setState("hopping");
@@ -517,57 +576,47 @@ export function MiniDotan() {
         }
         return;
       }
+      // Nothing yet: whether this is a tap or a scroll is known only once it
+      // moves or lifts.
       finger = {
         x: t.clientX,
         y: t.clientY,
         x0: t.clientX,
         y0: t.clientY,
-        v: 0,
-        at: now,
         down: true,
+        scrolling: false,
         tap: false,
         lift: 0,
         follow: now - lastScroll > 2500,
       };
-      if (finger.follow) aim(t.clientX, t.clientY, now);
     };
     const touchMove = (event: TouchEvent) => {
       userIntent(event);
       const t = event.touches[0];
       if (!finger?.down || event.touches.length !== 1 || !t) return;
-      const now = performance.now();
-      finger.v = Math.abs(t.clientY - finger.y) / Math.max(1, now - finger.at);
       finger.x = t.clientX;
       finger.y = t.clientY;
-      finger.at = now;
+      if (
+        finger.scrolling ||
+        Math.hypot(finger.x - finger.x0, finger.y - finger.y0) < 10
+      )
+        return;
+      finger.scrolling = true;
+      // A scroll: with motion he hops (see scroll); with reduced motion, which
+      // has no hops, he glances at the finger on the first swipe of a session.
+      if (reduced && finger.follow) aim(finger.x, finger.y, performance.now());
+      else neutral();
     };
     const touchEnd = (event: TouchEvent) => {
       if (!finger?.down || event.touches.length) return;
       const now = performance.now();
       finger.down = false;
       finger.lift = now;
-      finger.tap =
-        event.type === "touchend" &&
-        Math.hypot(finger.x - finger.x0, finger.y - finger.y0) < 10;
+      finger.tap = event.type === "touchend" && !finger.scrolling;
       // Every tap gets a glance, even mid-reading.
       if (finger.tap) aim(finger.x, finger.y, now);
-      // Phones scroll 500-3000 px a flick, so no hop per 100 px: only a hard
-      // fling after at least a screenful, rarely, and never over a message.
-      else if (
-        !reduced &&
-        now - finger.at < 100 &&
-        finger.v >= 1.5 &&
-        session >= innerHeight &&
-        !sessionHopped &&
-        now - lastHop >= 30000 &&
-        !messageUntil &&
-        now > suppressUntil &&
-        !busy() &&
-        current.current.state === "idle"
-      )
-        hop(now);
     };
-    /** Glance at the mouse, a held finger, a tap, or the page while it coasts. */
+    /** Glance at the mouse, a tap, or (reduced motion) the scrolling finger. */
     const updateLook = (now: number) => {
       if (pointer) {
         if (now - lastScroll > 350) aim(pointer.x, pointer.y, now, 15);
@@ -582,15 +631,6 @@ export function MiniDotan() {
       if (now >= end) {
         finger = null;
         neutral();
-        return;
-      }
-      // Reduced motion: the first glance is held, not updated.
-      if (reduced) return;
-      if (finger.down) {
-        if (finger.follow && now - posed >= 200) aim(finger.x, finger.y, now);
-      } else if (!finger.tap && speed > 0.5) {
-        // Still coasting after the flick: he watches the page go by.
-        aim(innerWidth / 2, innerHeight / 2, now);
       }
     };
     const scroll = () => {
@@ -599,19 +639,14 @@ export function MiniDotan() {
         raf = 0;
         const now = performance.now(),
           y = position();
-        if (now - lastScroll > 2500) {
-          session = 0;
-          sessionHopped = false;
-        }
-        speed = Math.abs(y - lastY) / Math.max(16, now - lastScroll);
-        session += Math.abs(y - lastY);
-        lastY = y;
         lastScroll = now;
         lastActivity = now;
         pointer = null;
         if (DEBUG) diag.current.scrolls++;
         // The mouse glance ends; a finger glance carries on. An idle gesture keeps playing.
         if (!finger) neutral();
+        // A phone swipe keeps the page coasting for a while after the finger
+        // lifts, so touch intent lasts longer; one hop per swipe either way.
         const eligible =
           !reduced &&
           intent > 0 &&
@@ -619,19 +654,15 @@ export function MiniDotan() {
           now > suppressUntil &&
           !busy() &&
           ["idle", "greeting", "speaking"].includes(current.current.state);
-        if (!coarse.matches) {
-          const next = scrollGesture(gesture, y, now, eligible);
-          gesture = next;
-          if (next.hop) hop(now);
-        } else if (
-          eligible &&
-          !endHopped &&
-          !messageUntil &&
-          y >= document.documentElement.scrollHeight - innerHeight - 2
-        ) {
-          endHopped = true; // one hop for reaching the end of the page
-          hop(now);
-        }
+        const next = scrollGesture(
+          gesture,
+          y,
+          now,
+          eligible,
+          coarse.matches ? 3000 : 6000,
+        );
+        gesture = next;
+        if (next.hop) hop();
       });
     };
     const observer = new IntersectionObserver(
@@ -783,8 +814,8 @@ export function MiniDotan() {
       data-mini-dotan
       data-state={state}
       data-side={side}
+      data-arriving={arriving || undefined}
       className={styles.dock}
-      hidden={hidden}
       aria-label="Mini Dotan companion"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -856,9 +887,8 @@ export function MiniDotan() {
               setSettings(false);
               setMessage("");
               setState("hidden");
-              document
-                .querySelector<HTMLButtonElement>("[data-show-mini-dotan]")
-                ?.focus({ preventScroll: true });
+              // The same round button stays, now as "Show Mini Dotan".
+              gear.current?.focus({ preventScroll: true });
             }}
           >
             Hide Mini Dotan
@@ -866,6 +896,7 @@ export function MiniDotan() {
         </div>
       )}
       <div className={styles.controls}>
+        {!hidden && (
         <button
           ref={button}
           type="button"
@@ -911,19 +942,25 @@ export function MiniDotan() {
             Mini Dotan settings.{quiet ? " Quiet mode is on." : ""}
           </span>
         </button>
+        )}
         {!open && state !== "submitting" && (
           <button
+            ref={gear}
             type="button"
             className={styles.gear}
-            aria-label="Mini Dotan settings"
-            aria-expanded={settings}
+            aria-label={hidden ? "Show Mini Dotan" : "Mini Dotan settings"}
+            aria-expanded={hidden ? undefined : settings}
             onClick={() => {
+              if (hidden) return summon();
               setSettings(!settings);
               setMessage("");
               setState("idle");
             }}
           >
-            ···
+            <span className={styles.face} aria-hidden="true" />
+            <span className={styles.dots} aria-hidden="true">
+              ···
+            </span>
           </button>
         )}
       </div>

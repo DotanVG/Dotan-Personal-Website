@@ -41,6 +41,29 @@ export function clampPetDrag(
   };
 }
 
+/**
+ * Touch drag: his feet 40 px above the fingertip, centred on it, so the finger
+ * never covers him. Clamped at the edges; never flipped below the finger.
+ */
+export function liftTarget(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  viewportWidth: number,
+  viewportHeight: number,
+) {
+  return clampPetDrag(
+    x - width / 2,
+    y - 40 - height,
+    width,
+    height,
+    viewportWidth,
+    viewportHeight,
+    24,
+  );
+}
+
 export function lookPose(
   dx: number,
   dy: number,
@@ -130,6 +153,7 @@ export function scrollGesture(
   y: number,
   now: number,
   eligible: boolean,
+  cooldown = 6000,
 ) {
   const fresh = now - previous.at > 220;
   const delta = y - previous.y;
@@ -140,7 +164,7 @@ export function scrollGesture(
     eligible &&
     !(fresh ? false : previous.hopped) &&
     Math.abs(distance) >= 100 &&
-    now - previous.lastHop >= 6000;
+    now - previous.lastHop >= cooldown;
   return {
     y,
     at: now,

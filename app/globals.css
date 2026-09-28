@@ -45,6 +45,9 @@
     background-color: rgb(var(--canvas));
     color: rgb(var(--ink));
     overflow-x: hidden;
+    /* clip, where supported: hidden on both html and body turns body into its own
+       scroll container, which mobile Chrome can scroll past the page's end. */
+    overflow-x: clip;
   }
 
   body {

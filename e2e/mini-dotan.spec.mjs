@@ -110,17 +110,134 @@ test("reduced motion: still speaks, and the walk follows the finger", { timeout:
   assert.ok(r.walkRows > 15 && r.animated, `walks through the frames (${JSON.stringify(r)})`);
 });
 
-for (const reducedMotion of ["no-preference", "reduce"]) {
-  test(`${reducedMotion}: glances at a tap and at the scrolling finger, then settles`, { timeout: 60000 }, async () => {
-    const r = await glances({ reducedMotion });
-    const detail = JSON.stringify(r);
-    assert.ok(r.tap[0] >= 9, `looks toward the tap (${detail})`);
-    assert.ok(r.afterTap[0] < 9, `and back to neutral after it (${detail})`);
-    assert.ok(r.held[0] >= 9, `looks toward the finger on the page (${detail})`);
-    assert.ok(r.scrolled > 100, `the gesture scrolled the page (${detail})`);
-    assert.ok(r.afterScroll[0] < 9, `settles once the page stops (${detail})`);
-    assert.equal(r.hopped, false, `no hop for an ordinary phone scroll (${detail})`);
-    if (reducedMotion === "reduce") assert.equal(r.poses.length, 1, `reduced motion holds one glance (${detail})`);
-    assert.deepEqual(r.errors, []);
-  });
-}
+test("no-preference: a tap gets a glance, a scroll gets a hop", { timeout: 60000 }, async () => {
+  const r = await glances({});
+  const detail = JSON.stringify(r);
+  assert.ok(r.tap[0] >= 9, `looks toward the tap (${detail})`);
+  assert.ok(r.afterTap[0] < 9, `and back to neutral after it (${detail})`);
+  assert.ok(r.held[0] < 9, `pressing alone isn't a tap yet: no glance (${detail})`);
+  assert.ok(r.scrolled > 100, `the gesture scrolled the page (${detail})`);
+  assert.equal(r.hopped, true, `the scroll made him hop (${detail})`);
+  assert.ok(r.afterScroll[0] < 9, `settles once the page stops (${detail})`);
+  assert.deepEqual(r.errors, []);
+});
+
+test("reduce: a tap gets a glance; a scroll, which can't hop, gets one held glance", { timeout: 60000 }, async () => {
+  const r = await glances({ reducedMotion: "reduce" });
+  const detail = JSON.stringify(r);
+  assert.ok(r.tap[0] >= 9, `looks toward the tap (${detail})`);
+  assert.ok(r.afterTap[0] < 9, `and back to neutral after it (${detail})`);
+  assert.ok(r.held[0] < 9, `pressing alone isn't a tap yet: no glance (${detail})`);
+  assert.equal(r.poses.length, 1, `one glance, held while scrolling (${detail})`);
+  assert.ok(Number(r.poses[0].split(",")[0]) >= 9, `toward the finger (${detail})`);
+  assert.equal(r.hopped, false, `no hop under reduced motion (${detail})`);
+  assert.ok(r.afterScroll[0] < 9, `settles once the page stops (${detail})`);
+  assert.deepEqual(r.errors, []);
+});
+
+test("touch drag holds him above the finger; release glides into the corner", { timeout: 60000 }, async () => {
+  const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const pet = page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']");
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1000);
+    const b = await pet.boundingBox();
+    const touch = await touchSession(page);
+    let x = b.x + b.width / 2,
+      y = b.y + b.height / 2;
+    await touch.down(1, x, y);
+    for (let i = 0; i < 20; i++) {
+      x -= 12;
+      y -= 10;
+      await touch.move(1, x, y);
+      await sleep(30);
+    }
+    await sleep(250); // past the 140 ms lift
+    const held = await pet.boundingBox();
+    const gear = await page.locator("[data-mini-dotan] button[aria-label='Mini Dotan settings']").evaluate((el) => getComputedStyle(el).visibility);
+    await touch.up(1);
+    await sleep(500);
+    const side = await page.locator("[data-mini-dotan]").getAttribute("data-side");
+    const detail = JSON.stringify({ x, y, held, gear, side });
+    assert.ok(Math.abs(held.x + held.width / 2 - x) <= 2, `centred on the finger (${detail})`);
+    assert.ok(Math.abs(held.y + held.height - (y - 40)) <= 2, `feet 40 px above it (${detail})`);
+    assert.equal(gear, "hidden", `settings button out of the way while held (${detail})`);
+    assert.equal(side, "left", `docks on the side he was carried to (${detail})`);
+    assert.deepEqual(realErrors(logs), []);
+  } finally {
+    await browser.close();
+  }
+});
+
+test("desktop mouse drag is unchanged: he stays under the cursor", { timeout: 60000 }, async () => {
+  const { browser, page } = await launch({});
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const pet = page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']");
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1000);
+    const b = await pet.boundingBox();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 10; i++) {
+      await page.mouse.move(b.x + b.width / 2 - i * 20, b.y + b.height / 2 - i * 10);
+      await sleep(20);
+    }
+    await sleep(100);
+    const held = await pet.boundingBox();
+    await page.mouse.up();
+    assert.ok(Math.abs(held.x - (b.x - 200)) <= 2 && Math.abs(held.y - (b.y - 100)) <= 2, JSON.stringify({ b, held }));
+  } finally {
+    await browser.close();
+  }
+});
+
+test("hidden: a round face button stays; it summons him with a whirl", { timeout: 60000 }, async () => {
+  const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const dock = page.locator("[data-mini-dotan]");
+    const pet = dock.locator("button[aria-label='Contact Dotan']");
+    await pet.waitFor({ timeout: 30000 });
+    await dock.locator("button[aria-label='Mini Dotan settings']").click();
+    await dock.getByRole("button", { name: "Hide Mini Dotan" }).click();
+    const show = dock.locator("button[aria-label='Show Mini Dotan']");
+    await show.waitFor({ timeout: 2000 });
+    assert.equal(await pet.count(), 0, "he's gone");
+    assert.equal(await show.evaluate((el) => el === document.activeElement), true, "focus stays on the round button");
+    assert.equal(await show.locator("[class*=face]").evaluate((el) => getComputedStyle(el).display), "block", "shows his face");
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await show.waitFor({ timeout: 30000 });
+    assert.equal(await pet.count(), 0, "hidden survives a reload");
+
+    await show.click();
+    await pet.waitFor({ timeout: 2000 });
+    assert.equal(await dock.getAttribute("data-arriving"), "true", "arrival animation running");
+    assert.equal(await dock.getAttribute("data-state"), "hopping", "jumps in");
+    await sleep(1300);
+    assert.equal(await dock.getAttribute("data-arriving"), null);
+    assert.equal(await dock.locator("button[aria-label='Mini Dotan settings']").count(), 1, "back to the ··· menu");
+    assert.equal(await page.evaluate(() => localStorage.getItem("mini-dotan-hidden")), "false");
+    assert.deepEqual(realErrors(logs), []);
+  } finally {
+    await browser.close();
+  }
+});
+
+test("footer: 'Show Mini Dotan' sits on its own line after 'Switch to Explore'", { timeout: 60000 }, async () => {
+  const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    // Hydrated (Mini Dotan mounts client-side), so the footer won't be swapped.
+    await page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']").waitFor({ timeout: 30000 });
+    const footer = page.locator("footer");
+    await footer.scrollIntoViewIfNeeded();
+    const explore = await footer.getByText("Switch to Explore").boundingBox();
+    const show = await footer.getByRole("button", { name: "Show Mini Dotan" }).boundingBox();
+    assert.ok(show.y >= explore.y + explore.height, JSON.stringify({ explore, show }));
+  } finally {
+    await browser.close();
+  }
+});

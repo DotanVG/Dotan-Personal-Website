@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   clampPetDrag,
   cycles,
+  liftTarget,
   lookPose,
   scrollGesture,
   startWalk,
@@ -23,6 +24,18 @@ test("mobile drag stays within the viewport and selects the nearest dock", () =>
   });
   assert.equal(clampPetDrag(60, 200, 100, 88, 390, 844, 24).side, "left");
   assert.equal(clampPetDrag(240, 200, 100, 88, 390, 844, 24).side, "right");
+});
+
+test("touch drag lifts him 40 px above the finger, centred, clamped, never flipped", () => {
+  // 56x88 pet, 390x844 phone.
+  assert.deepEqual(liftTarget(200, 600, 56, 88, 390, 844), { left: 172, top: 472, side: "right" });
+  // Finger high up: clamped at the top (72), not flipped under the finger.
+  assert.equal(liftTarget(200, 100, 56, 88, 390, 844).top, 72);
+  // Edges: clamped 24 px in.
+  assert.equal(liftTarget(5, 600, 56, 88, 390, 844).left, 24);
+  assert.equal(liftTarget(389, 600, 56, 88, 390, 844).left, 390 - 56 - 24);
+  // The corner follows the finger's side.
+  assert.equal(liftTarget(150, 600, 56, 88, 390, 844).side, "left");
 });
 
 test("direction convention, neutral deadzone and angular hysteresis", () => {

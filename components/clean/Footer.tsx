@@ -37,7 +37,6 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink/70">
-          <ShowMiniDotan />
           {socials.map((s) => (
             <Link
               key={s.label}
@@ -74,6 +73,9 @@ export function Footer() {
             />
             <span className="relative">Switch to Explore →</span>
           </a>
+          <div className="basis-full">
+            <ShowMiniDotan />
+          </div>
         </div>
       </div>
       <div className="border-t border-line/50">
