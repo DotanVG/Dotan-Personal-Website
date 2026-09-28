@@ -50,6 +50,20 @@
     calc(var(--row) * var(--height) * -1);
   background-repeat: no-repeat;
 }
+.quietBadge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  color: rgb(var(--ink) / 0.72);
+  background: rgb(var(--canvas) / 0.92);
+  border: 1px solid rgb(var(--line));
+}
 .gear {
   pointer-events: auto;
   width: 44px;

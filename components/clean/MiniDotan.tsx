@@ -20,6 +20,11 @@ import {
 import { experience } from "@/content/experience";
 import styles from "./MiniDotan.module.css";
 
+/** Compiled out of production builds (see next.config.ts). */
+const DEBUG = process.env.MINI_DEBUG === "1";
+/** Still pause between idle gestures, ms. */
+const idlePause = () => 2500 + Math.random() * 1500;
+
 function preference(key: string, value?: boolean): boolean {
   try {
     if (value !== undefined)
@@ -72,6 +77,8 @@ export function MiniDotan() {
     seen: new Set<string>(),
   });
   const formStatus = useRef<ContactStatus>("idle");
+  const diag = useRef({ frames: 0, scrolls: 0, hops: 0, greetings: 0 });
+  const [debug, setDebug] = useState(false);
   const hidden = state === "hidden";
   // No ambient animation (hops, glances, idle cycles).
   const still = quiet || reduced || !visible;
@@ -219,15 +226,18 @@ export function MiniDotan() {
   }, [ready, finishDrag]);
 
   function paint(row = 0, col = 0) {
+    if (DEBUG && (row || col)) diag.current.frames++;
     sprite.current?.style.setProperty("--row", String(row));
     sprite.current?.style.setProperty("--col", String(col));
   }
+
 
   useEffect(() => {
     setQuiet(preference("quiet"));
     setSide(preference("left") ? "left" : "right");
     if (preference("hidden")) setState("hidden");
     setReady(true);
+    if (DEBUG) setDebug(new URLSearchParams(location.search).has("mini-debug"));
     const show = () => {
       preference("hidden", false);
       if (current.current.state === "hidden") setState("idle");
@@ -271,7 +281,7 @@ export function MiniDotan() {
         else if (walking || state === "idle" || state === "submitting") {
           col = 0;
           paint();
-          timer = setTimeout(frame, !walking && state === "idle" ? 6500 : 0);
+          timer = setTimeout(frame, !walking && state === "idle" ? idlePause() : 0);
         } else {
           paint();
           if (state === "greeting") setState("speaking");
@@ -280,7 +290,7 @@ export function MiniDotan() {
       }, cycle.times[col]);
     };
     // Begin idle with a still pause; direct reactions play immediately.
-    timer = setTimeout(frame, !walking && state === "idle" ? 6500 : 0);
+    timer = setTimeout(frame, !walking && state === "idle" ? idlePause() : 0);
     return () => clearTimeout(timer);
   }, [state, still, reduced, hidden, ready, settings, walking]);
 
@@ -303,6 +313,14 @@ export function MiniDotan() {
     let messageUntil = 0;
     const candidates = new Map<string, number>();
     const fine = matchMedia("(hover: hover) and (pointer: fine)");
+    // Drop a pointer-glance pose (rows 9+) without interrupting an idle gesture.
+    const clearLook = () => {
+      if (
+        current.current.state === "idle" &&
+        Number(sprite.current?.style.getPropertyValue("--row")) >= 9
+      )
+        paint();
+    };
     const busy = () =>
       !!drag.current ||
       current.current.open ||
@@ -328,7 +346,7 @@ export function MiniDotan() {
       };
       intent = 0;
       pointer = null;
-      paint();
+      clearLook();
     };
     const userIntent = (event: Event) => {
       if (
@@ -356,7 +374,7 @@ export function MiniDotan() {
     const click = (event: Event) => {
       lastActivity = performance.now();
       pointer = null;
-      if (current.current.state === "idle") paint();
+      clearLook();
       if ((event.target as Element)?.closest?.('a[href*="#"]')) {
         suppressUntil = performance.now() + 1800;
         reset();
@@ -374,7 +392,7 @@ export function MiniDotan() {
     const leave = () => {
       pointer = null;
       pose = null;
-      if (current.current.state === "idle") paint();
+      clearLook();
     };
     const scroll = () => {
       if (raf) return;
@@ -384,7 +402,9 @@ export function MiniDotan() {
         lastScroll = now;
         lastActivity = now;
         pointer = null;
-        if (current.current.state === "idle") paint();
+        if (DEBUG) diag.current.scrolls++;
+        // Only a glance pose is dropped; an idle gesture keeps playing while scrolling.
+        clearLook();
         const eligible =
           intent > 0 &&
           now - intent < 900 &&
@@ -394,6 +414,7 @@ export function MiniDotan() {
         const next = scrollGesture(gesture, position(), now, eligible && !still);
         gesture = next;
         if (next.hop) {
+          if (DEBUG) diag.current.hops++;
           messageUntil = 0;
           setMessage("");
           setState("hopping");
@@ -445,6 +466,7 @@ export function MiniDotan() {
       let line = "";
       if (!b.greeted) {
         b.greeted = true;
+        if (DEBUG) diag.current.greetings++;
         line =
           "Hi, I’m Mini Dotan. Tap me whenever you’d like to get in touch.";
         setState("greeting");
@@ -532,6 +554,20 @@ export function MiniDotan() {
   }
   if (!ready) return null;
   return createPortal(
+    <>
+    {DEBUG && debug && (
+      <MiniDebug
+        read={() => ({
+          quiet,
+          reducedMotion: reduced,
+          tabVisible: visible,
+          state,
+          walking: walking ?? "-",
+          frame: `${sprite.current?.style.getPropertyValue("--row") || 0},${sprite.current?.style.getPropertyValue("--col") || 0}`,
+          ...diag.current,
+        })}
+      />
+    )}
     <aside
       ref={dock}
       data-mini-dotan
@@ -655,9 +691,14 @@ export function MiniDotan() {
           }}
         >
           <span ref={sprite} className={styles.sprite} aria-hidden="true" />
+          {quiet && (
+            <span className={styles.quietBadge} aria-hidden="true">
+              zz
+            </span>
+          )}
           <span id="mini-dotan-drag-help" className="sr-only">
             Tap to contact Dotan. Drag to either bottom corner, or move using
-            Mini Dotan settings.
+            Mini Dotan settings.{quiet ? " Quiet mode is on." : ""}
           </span>
         </button>
         {!open && state !== "submitting" && (
@@ -676,7 +717,59 @@ export function MiniDotan() {
           </button>
         )}
       </div>
-    </aside>,
+    </aside>
+    </>,
     document.body,
+  );
+}
+
+/** Staging-only readout (?mini-debug) of what this device reports, plus a reset. */
+function MiniDebug({ read }: { read: () => Record<string, string | number | boolean> }) {
+  const [, tick] = useState(0);
+  const readRef = useRef(read);
+  readRef.current = read;
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 250);
+    return () => clearInterval(id);
+  }, []);
+  const values = readRef.current();
+  return (
+    <div
+      role="status"
+      style={{
+        position: "fixed",
+        top: 8,
+        left: 8,
+        zIndex: 60,
+        maxWidth: 260,
+        padding: "8px 10px",
+        borderRadius: 12,
+        background: "rgba(0,0,0,0.82)",
+        color: "#fff",
+        font: "12px/1.45 ui-monospace, monospace",
+      }}
+    >
+      <strong>Mini Dotan debug</strong>
+      {Object.entries(values).map(([k, v]) => (
+        <div key={k}>
+          {k}: {String(v)}
+        </div>
+      ))}
+      <div style={{ opacity: 0.7, wordBreak: "break-word" }}>{navigator.userAgent.slice(0, 90)}</div>
+      <button
+        type="button"
+        style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, background: "#fff", color: "#000" }}
+        onClick={() => {
+          try {
+            ["quiet", "left", "hidden"].forEach((k) => localStorage.removeItem(`mini-dotan-${k}`));
+          } catch {
+            // storage blocked
+          }
+          location.reload();
+        }}
+      >
+        Reset Mini Dotan settings
+      </button>
+    </div>
   );
 }

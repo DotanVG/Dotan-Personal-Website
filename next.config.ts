@@ -17,7 +17,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Always inlined, so the Explore test hook compiles out of normal builds
   // (only `npm run build:e2e` sets it).
-  env: { EXPLORE_TEST_HOOK: process.env.EXPLORE_TEST_HOOK === "1" ? "1" : "0" },
+  env: {
+    EXPLORE_TEST_HOOK: process.env.EXPLORE_TEST_HOOK === "1" ? "1" : "0",
+    // Mini Dotan's ?mini-debug panel: local, staging and previews only.
+    MINI_DEBUG: process.env.VERCEL_ENV === "production" ? "0" : "1",
+  },
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
