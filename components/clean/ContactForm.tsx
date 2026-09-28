@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { site } from "@/content/site";
 import { trackEvent } from "@/lib/analytics";
 
-type Status = "idle" | "submitting" | "success" | "error";
+export type ContactStatus = "idle" | "submitting" | "success" | "error";
 
-export function ContactForm() {
-  const [status, setStatus] = useState<Status>("idle");
+export function ContactForm({ compact = false, onStatusChange }: { compact?: boolean; onStatusChange?: (status: ContactStatus) => void }) {
+  const id = useId();
+  const [status, updateStatus] = useState<ContactStatus>("idle");
+  function setStatus(next: ContactStatus) {
+    updateStatus(next);
+    onStatusChange?.(next);
+  }
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -41,7 +46,7 @@ export function ContactForm() {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl border border-line bg-canvas-raised/60 p-6 transition-all duration-700 hover:border-ink/20 md:p-8">
+    <div className={compact ? "relative p-4" : "group relative overflow-hidden rounded-3xl border border-line bg-canvas-raised/60 p-6 transition-all duration-700 hover:border-ink/20 md:p-8"}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
@@ -63,7 +68,7 @@ export function ContactForm() {
             <span aria-hidden className="text-3xl">
               ❆
             </span>
-            <h3 className="font-display text-2xl font-medium">Message sent.</h3>
+            <h3 role="status" className="font-display text-2xl font-medium">Message sent.</h3>
             <p className="text-ink/70">
               Thanks for reaching out, I&apos;ll get back to you as soon as I
               can. In a hurry?{"\ "}
@@ -93,35 +98,38 @@ export function ContactForm() {
             exit={{ opacity: 0 }}
             onSubmit={onSubmit}
             className="relative flex flex-col gap-4"
-            noValidate
+            aria-busy={status === "submitting"}
           >
-            <Field label="Name" htmlFor="name">
+            <Field label="Name" htmlFor={`${id}-name`}>
               <input
-                id="name"
+                id={`${id}-name`}
                 name="name"
                 type="text"
                 required
                 autoComplete="name"
+                disabled={status === "submitting"}
                 className="input"
                 placeholder="Your name"
               />
             </Field>
-            <Field label="Email" htmlFor="email">
+            <Field label="Email" htmlFor={`${id}-email`}>
               <input
-                id="email"
+                id={`${id}-email`}
                 name="_replyto"
                 type="email"
                 required
                 autoComplete="email"
+                disabled={status === "submitting"}
                 className="input"
                 placeholder="you@example.com"
               />
             </Field>
-            <Field label="Message" htmlFor="message">
+            <Field label="Message" htmlFor={`${id}-message`}>
               <textarea
-                id="message"
+                id={`${id}-message`}
                 name="message"
-                rows={5}
+                rows={compact ? 3 : 5}
+                disabled={status === "submitting"}
                 required
                 className="input resize-y"
                 placeholder="Tell me what you're working on…"
