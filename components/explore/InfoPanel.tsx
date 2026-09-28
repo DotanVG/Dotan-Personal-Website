@@ -1,66 +1,72 @@
 "use client";
 
 import Image from "next/image";
-import type { MarkerData } from "./LocationMarker";
+import { experience } from "@/content/experience";
+import { education } from "@/content/education";
+import { Modal } from "./Dialogs";
 
-export function InfoPanel({
-  marker,
-  onClose,
-}: {
-  marker: MarkerData;
-  onClose: () => void;
-}) {
+type Entry = {
+  title: string;
+  subtitle: string;
+  start: string;
+  end: string;
+  current?: boolean;
+  logo: string;
+  blurb?: string;
+  bullets: string[];
+};
+
+/** Portfolio entry for a landmark slug, straight from the site content. */
+export function entryFor(slug: string): Entry | null {
+  const e = experience.find((x) => x.slug === slug);
+  if (e) return { title: e.role, subtitle: e.company, start: e.start, end: e.end, current: e.current, logo: e.logo, blurb: e.blurb, bullets: e.bullets };
+  const d = education.find((x) => x.slug === slug);
+  if (d) return { title: d.degree, subtitle: d.school, start: d.start, end: d.end, logo: d.logo, blurb: d.blurb, bullets: d.bullets };
+  return null;
+}
+
+export function InfoPanel({ slug, open, onClose }: { slug: string | null; open: boolean; onClose: () => void }) {
+  const entry = slug ? entryFor(slug) : null;
   return (
-    <div className="pointer-events-auto fixed inset-x-4 bottom-4 z-30 mx-auto max-w-2xl rounded-2xl border border-line bg-canvas-raised/95 p-5 shadow-2xl backdrop-blur md:bottom-8 md:p-6">
-      <div className="flex items-start gap-4">
-        <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-line bg-canvas md:size-20">
-          <Image
-            src={marker.logo}
-            alt={`${marker.subtitle} logo`}
-            fill
-            sizes="80px"
-            className="object-contain p-2"
-          />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/60">
-              {marker.start}
-              {marker.start !== marker.end ? ` - ${marker.end}` : ""}
-              {marker.current ? " · Present" : ""}
+    <Modal open={open && !!entry} onClose={onClose} labelledBy="info-title">
+      {entry && (
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-[#1d222b]/10 bg-white sm:size-16">
+              <Image src={entry.logo} alt={`${entry.subtitle} logo`} fill sizes="64px" className="object-contain p-1.5" />
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close panel"
-              className="rounded-full border border-line px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-ink/70 hover:bg-canvas hover:text-ink"
-            >
-              Close (E)
-            </button>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold uppercase tracking-widest text-[#b3402c]">
+                {entry.start}
+                {entry.start !== entry.end ? ` – ${entry.end}` : ""}
+              </div>
+              <h2 id="info-title" className="mt-0.5 font-display text-xl font-semibold leading-tight sm:text-2xl">
+                {entry.title}
+              </h2>
+              <div className="text-[15px] text-[#1d222b]/70">{entry.subtitle}</div>
+            </div>
           </div>
-          <h3 className="mt-1 font-display text-xl font-medium tracking-tight md:text-2xl">
-            {marker.title}
-          </h3>
-          <div className="text-sm text-ink/60 md:text-base">{marker.subtitle}</div>
+          {entry.blurb && <p className="mt-4 text-pretty text-[15px] leading-relaxed text-[#1d222b]/85">{entry.blurb}</p>}
+          <ul className="mt-3 flex flex-col gap-1.5 text-[15px] text-[#1d222b]/85">
+            {entry.bullets.map((b, i) => (
+              <li key={i} className="flex gap-2">
+                <span aria-hidden className="text-[#b3402c]">
+                  ›
+                </span>
+                <span className="text-pretty">{b}</span>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={onClose}
+            autoFocus
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#1d222b] px-4 text-[15px] font-semibold text-white hover:bg-[#2c333f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b3402c]"
+          >
+            Back to the city
+          </button>
         </div>
-      </div>
-
-      {marker.blurb && (
-        <p className="mt-4 text-pretty text-sm leading-relaxed text-ink/80 md:text-base">
-          {marker.blurb}
-        </p>
       )}
-
-      <ul className="mt-3 flex max-h-40 flex-col gap-1.5 overflow-y-auto pr-1 text-sm text-ink/80 md:max-h-56 md:text-[15px]">
-        {marker.bullets.map((b, i) => (
-          <li key={i} className="flex gap-2">
-            <span aria-hidden className="text-ink/40">
-              ›
-            </span>
-            <span className="text-pretty">{b}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </Modal>
   );
 }

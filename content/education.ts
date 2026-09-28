@@ -17,8 +17,6 @@ export const education: Education[] = [
       "Deployment automation strategies.",
       "Application performance management.",
     ],
-    exploreBuilding: "academy",
-    position: [0, 22],
   },
   {
     slug: "hackeru",
@@ -33,8 +31,6 @@ export const education: Education[] = [
       "React, Node.js, MongoDB.",
       "End-to-end project work and deployment.",
     ],
-    exploreBuilding: "glassCube",
-    position: [-22, 0],
   },
   {
     slug: "ort",
@@ -49,8 +45,6 @@ export const education: Education[] = [
       "Graduated with honors.",
       "IDF “Eden” Project alumnus.",
     ],
-    exploreBuilding: "brickBlock",
-    position: [0, -22],
   },
   {
     slug: "naval",
@@ -66,7 +60,5 @@ export const education: Education[] = [
       "Technological Bagrut majoring in computers and electronics.",
       "Three-year boarding school experience focused on discipline, leadership, and STEM.",
     ],
-    exploreBuilding: "lighthouse",
-    position: [16, -14],
   },
 ];

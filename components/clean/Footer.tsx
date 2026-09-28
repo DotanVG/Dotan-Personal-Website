@@ -64,7 +64,7 @@ export function Footer() {
               />
             </Link>
           ))}
-          <Link
+          <a
             href="?mode=explore"
             className="group relative overflow-hidden rounded-full border border-line px-3 py-1 text-xs uppercase tracking-[0.2em] transition-all duration-500 hover:border-ink/60 hover:text-ink"
           >
@@ -73,7 +73,7 @@ export function Footer() {
               className="absolute inset-0 -translate-x-full bg-ink/10 transition-transform duration-500 group-hover:translate-x-0"
             />
             <span className="relative">Switch to Explore →</span>
-          </Link>
+          </a>
         </div>
       </div>
       <div className="border-t border-line/50">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useApp } from "@/lib/store";
 import { LoadingScreen } from "@/components/explore/LoadingScreen";
 import { MiniDotan } from "@/components/clean/MiniDotan";
@@ -42,32 +42,28 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
     return <>{cleanContent}</>;
   }
 
-  return (
+  // Enter fades only: an exit animation under AnimatePresence "wait" never completed
+  // (nested presence in the clean tree), which stranded in-page mode switches.
+  return mode === "clean" ? (
     <>
-      {mode === "clean" && <MiniDotan />}
-      <AnimatePresence mode="wait">
-        {mode === "clean" ? (
-          <motion.div
-            key="clean"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {cleanContent}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="explore"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <ExploreScene />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MiniDotan />
+      <motion.div
+        key="clean"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {cleanContent}
+      </motion.div>
     </>
+  ) : (
+    <motion.div
+      key="explore"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <ExploreScene />
+    </motion.div>
   );
 }

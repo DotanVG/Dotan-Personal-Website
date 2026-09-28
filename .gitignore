@@ -21,3 +21,6 @@ next-env.d.ts
 
 .idea/
 .vscode/
+
+# e2e evidence (screenshots, reports)
+e2e/artifacts/
