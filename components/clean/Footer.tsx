@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ShowMiniDotan } from "./ShowMiniDotan";
 import { site } from "@/content/site";
 import { LinkedInIcon, GitHubIcon, ItchIcon, WhatsAppIcon } from "@/components/ui/icons";
 
@@ -73,9 +72,6 @@ export function Footer() {
             />
             <span className="relative">Switch to Explore →</span>
           </a>
-          <div className="basis-full">
-            <ShowMiniDotan />
-          </div>
         </div>
       </div>
       <div className="border-t border-line/50">

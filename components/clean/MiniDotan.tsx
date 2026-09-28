@@ -219,7 +219,7 @@ export function MiniDotan() {
     gesture.y = next.top;
     // Painted directly: one React render per drag, not one per frame.
     const walk = gesture.walk;
-    paint(...walkFrame(walk, quiet && reduced));
+    paint(...walkFrame(walk, quiet && reduced, reduced));
     clearTimeout(walkPause.current);
     // Finger resting: face the way he was going (look poses 4 and 12).
     if (!walk.carried && !(quiet && reduced))
@@ -335,13 +335,11 @@ export function MiniDotan() {
     if (DEBUG) setDebug(new URLSearchParams(location.search).has("mini-debug"));
     const visibility = () => setVisible(!document.hidden);
     visibility();
-    window.addEventListener("mini-dotan-show", summon);
     document.addEventListener("visibilitychange", visibility);
     return () => {
-      window.removeEventListener("mini-dotan-show", summon);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [summon]);
+  }, []);
 
   useEffect(() => {
     // While dragged, moveDrag paints the walk itself.
@@ -860,19 +858,6 @@ export function MiniDotan() {
       )}
       {!open && settings && (
         <div className={`${styles.bubble} ${styles.settings}`}>
-          <p className="px-2 py-2 text-xs text-ink/60">
-            Drag Mini Dotan to either bottom corner, or use this button.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              const next = side === "right" ? "left" : "right";
-              setSide(next);
-              preference("left", next === "left");
-            }}
-          >
-            Move to {side === "right" ? "left" : "right"} corner
-          </button>
           <button
             type="button"
             aria-pressed={quiet}
@@ -922,6 +907,19 @@ export function MiniDotan() {
           onLostPointerCapture={(event) => {
             if (drag.current?.id === event.pointerId) finishDrag(true);
           }}
+          // The non-drag way to change corners (the settings button for it is gone).
+          onKeyDown={(event) => {
+            const next =
+              event.key === "ArrowLeft"
+                ? "left"
+                : event.key === "ArrowRight"
+                  ? "right"
+                  : null;
+            if (!next) return;
+            event.preventDefault();
+            setSide(next);
+            preference("left", next === "left");
+          }}
           onClick={(event) => {
             if (event.detail !== 0 && suppressClick.current) {
               suppressClick.current = false;
@@ -944,8 +942,8 @@ export function MiniDotan() {
             </span>
           )}
           <span id="mini-dotan-drag-help" className="sr-only">
-            Tap to contact Dotan. Drag to either bottom corner, or move using
-            Mini Dotan settings.{quiet ? " Quiet mode is on." : ""}
+            Tap to contact Dotan. Drag, or press the left or right arrow key, to
+            move him to either bottom corner.{quiet ? " Quiet mode is on." : ""}
           </span>
         </button>
         )}

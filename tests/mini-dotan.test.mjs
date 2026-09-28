@@ -70,11 +70,19 @@ test("drag walk steps with distance, turns with hysteresis, dangles when carried
   w = drive(w, [[-20, 0, 800]]);
   assert.equal(w.dir, -1);
   assert.deepEqual(walkFrame(w), [cycles.left.row, (before + 1) % 8]);
-  // Mostly vertical: carried pose; horizontal again: walking.
+  // Mostly vertical: carried, and he jumps through the whole hop cycle with the
+  // vertical travel (reduced motion holds the airborne frame); horizontal again: walking.
   w = drive(startWalk(1), [[1, 12, 0], [1, 12, 100], [1, 12, 200]]);
   assert.equal(w.carried, true);
   assert.deepEqual(walkFrame(w), [cycles.hopping.row, 1]);
-  w = drive(w, [[14, 0, 300], [14, 0, 400]]);
+  const jump = [];
+  for (let i = 0; i < 6; i++) {
+    w = walkStep(w, 0, 12, 300 + i * 100);
+    jump.push(walkFrame(w)[1]);
+  }
+  assert.deepEqual(jump, [2, 3, 4, 0, 1, 2]);
+  assert.deepEqual(walkFrame(w, false, true), [cycles.hopping.row, 1]);
+  w = drive(w, [[14, 0, 900], [14, 0, 1000], [14, 0, 1100]]);
   assert.equal(w.carried, false);
   // Quiet + reduced motion: one frame, facing the way.
   assert.deepEqual(walkFrame(w, true), [cycles.right.row, 0]);

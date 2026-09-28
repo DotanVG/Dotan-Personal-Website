@@ -291,17 +291,50 @@ test("hidden: a round face button stays; it summons him with a whirl", { timeout
   }
 });
 
-test("footer: 'Show Mini Dotan' sits on its own line after 'Switch to Explore'", { timeout: 60000 }, async () => {
+test("settings are just quiet mode and hide; arrow keys change corners", { timeout: 60000 }, async () => {
   const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
   try {
     await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
-    // Hydrated (Mini Dotan mounts client-side), so the footer won't be swapped.
-    await page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']").waitFor({ timeout: 30000 });
-    const footer = page.locator("footer");
-    await footer.scrollIntoViewIfNeeded();
-    const explore = await footer.getByText("Switch to Explore").boundingBox();
-    const show = await footer.getByRole("button", { name: "Show Mini Dotan" }).boundingBox();
-    assert.ok(show.y >= explore.y + explore.height, JSON.stringify({ explore, show }));
+    const dock = page.locator("[data-mini-dotan]");
+    const pet = dock.locator("button[aria-label='Contact Dotan']");
+    await pet.waitFor({ timeout: 30000 });
+    await dock.locator("button[aria-label='Mini Dotan settings']").click();
+    const items = await dock.locator("[class*=settings] button").allInnerTexts();
+    assert.deepEqual(items.map((t) => t.replace(/\s+/g, " ").trim()), ["Quiet mode Off", "Hide Mini Dotan"]);
+    await page.keyboard.press("Escape");
+    await pet.focus();
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await dock.getAttribute("data-side"), "left");
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await dock.getAttribute("data-side"), "right");
+    assert.equal(await page.locator("footer").getByText("Show Mini Dotan").count(), 0, "footer link removed");
+  } finally {
+    await browser.close();
+  }
+});
+
+test("dragged up or down, he jumps through the whole hop", { timeout: 60000 }, async () => {
+  const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const pet = page.locator("[data-mini-dotan] button[aria-label='Contact Dotan']");
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1000);
+    const b = await pet.boundingBox();
+    const touch = await touchSession(page);
+    const x = b.x + b.width / 2;
+    let y = b.y + b.height / 2;
+    const frames = [];
+    await touch.down(1, x, y);
+    for (let i = 0; i < 30; i++) {
+      y -= 12;
+      await touch.move(1, x, y);
+      await sleep(70);
+      frames.push(await frame(page));
+    }
+    await touch.up(1);
+    const cols = new Set(frames.filter(([row]) => row === 4).map(([, col]) => col));
+    assert.equal(cols.size, 5, `all five jump frames (${JSON.stringify(frames)})`);
   } finally {
     await browser.close();
   }

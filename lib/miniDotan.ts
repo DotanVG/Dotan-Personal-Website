@@ -125,21 +125,32 @@ export function walkStep(w: Walk, dx: number, dy: number, now: number): Walk {
     my *= 32 / path;
   }
   const carried = w.carried ? mx <= my : path >= 32 && my > 2 * mx;
-  travel += Math.abs(dx);
+  // Walking follows horizontal travel; carried up or down, he jumps along with
+  // the vertical travel instead.
+  travel += Math.abs(carried ? dy : dx);
   // One frame per 12 px, at most one per 60 ms; distance beyond that is dropped.
-  if (!carried && travel >= 12 && now - at >= 60) {
-    col = (col + 1) % cycles.right.times.length;
+  if (travel >= 12 && now - at >= 60) {
+    col = (col + 1) % 40; // 40: a whole number of walk (8) and jump (5) cycles
     travel = 0;
     at = now;
   }
   return { dir, x, far, turned, travel, col, at, mx, my, carried };
 }
 
-/** [row, col] for a walk; `still` holds one frame facing the way (quiet + reduced motion). */
-export function walkFrame(w: Walk, still = false): [number, number] {
+/**
+ * [row, col] for a drag. `still` (quiet + reduced motion) holds one frame facing
+ * the way; `calm` (reduced motion) holds the airborne frame instead of jumping.
+ */
+export function walkFrame(
+  w: Walk,
+  still = false,
+  calm = false,
+): [number, number] {
   const row = w.dir > 0 ? cycles.right.row : cycles.left.row;
   if (still) return [row, 0];
-  return w.carried ? [cycles.hopping.row, 1] : [row, w.col];
+  if (w.carried)
+    return [cycles.hopping.row, calm ? 1 : w.col % cycles.hopping.times.length];
+  return [row, w.col % cycles.right.times.length];
 }
 
 export function scrollGesture(
