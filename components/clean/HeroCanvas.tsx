@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Icosahedron, MeshTransmissionMaterial, Environment, Float } from "@react-three/drei";
+import { Environment, Float, MeshTransmissionMaterial, Sphere } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
 import { useTheme } from "next-themes";
 import { createNoise3D } from "simplex-noise";
@@ -11,12 +11,16 @@ function useScrollProgress() {
   const ref = useRef(0);
   useEffect(() => {
     function update() {
-      const max = Math.max(1, window.innerHeight * 1.5);
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       ref.current = Math.min(1, window.scrollY / max);
     }
     update();
     window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
   return ref;
 }
@@ -34,13 +38,15 @@ function HeroBlob({
   scrollRef: React.RefObject<number>;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const pathRef = useRef<THREE.Group>(null);
   const noise = useMemo(() => createNoise3D(), []);
   const basePositions = useRef<Float32Array | null>(null);
   const { resolvedTheme } = useTheme();
 
-  useFrame((_, dt) => {
+  useFrame(({ clock }, dt) => {
     const mesh = meshRef.current;
-    if (!mesh) return;
+    const path = pathRef.current;
+    if (!mesh || !path) return;
 
     const velocity = pointerVelocityRef.current;
     const sensitivity = 0.005;
@@ -48,26 +54,26 @@ function HeroBlob({
 
     mesh.rotation.y += velocity.x * sensitivity;
     mesh.rotation.x += velocity.y * sensitivity;
-    mesh.rotation.z += dt * 0.05;
+    mesh.rotation.z += dt * 0.08;
 
     velocity.x *= damping;
     velocity.y *= damping;
 
-    const t = performance.now() * 0.00045;
+    const t = clock.getElapsedTime() * 0.32;
     const geom = mesh.geometry as THREE.BufferGeometry;
     const pos = geom.attributes.position as THREE.BufferAttribute;
     if (!basePositions.current) {
       basePositions.current = new Float32Array(pos.array);
     }
     const base = basePositions.current;
-    const amp = 0.14;
     for (let i = 0; i < pos.count; i++) {
       const ix = i * 3;
       const x = base[ix];
       const y = base[ix + 1];
       const z = base[ix + 2];
-      const n = noise(x * 0.9 + t, y * 0.9 + t, z * 0.9);
-      const k = 1 + n * amp;
+      const swell = noise(x * 0.72 + t, y * 0.72 + t * 0.8, z * 0.72 + t * 0.6);
+      const ripples = noise(x * 1.8 - t * 0.7, y * 1.8 + t * 0.45, z * 1.8);
+      const k = 1 + swell * 0.16 + ripples * 0.035;
       pos.array[ix] = x * k;
       pos.array[ix + 1] = y * k;
       pos.array[ix + 2] = z * k;
@@ -75,52 +81,61 @@ function HeroBlob({
     pos.needsUpdate = true;
     geom.computeVertexNormals();
 
-    const sp = scrollRef.current ?? 0;
-    const scale = 1 - sp * 0.35;
-    mesh.scale.setScalar(scale);
-    mesh.position.y = sp * -1.4;
+    const sp = THREE.MathUtils.clamp(scrollRef.current ?? 0, 0, 1);
+    const angle = -0.2 + sp * Math.PI * 4;
+    const radius = 0.65 - sp * 0.18;
+    const x = 1.45 + Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius * 1.45;
+    const z = -sp * 1.1;
+    const scale = 1 - sp * 0.3;
+
+    path.position.x = THREE.MathUtils.damp(path.position.x, x, 4, dt);
+    path.position.y = THREE.MathUtils.damp(path.position.y, y, 4, dt);
+    path.position.z = THREE.MathUtils.damp(path.position.z, z, 4, dt);
+    const nextScale = THREE.MathUtils.damp(path.scale.x, scale, 4, dt);
+    path.scale.setScalar(nextScale);
   });
 
   const dark = resolvedTheme === "dark";
 
   return (
-    <Float speed={0.6} rotationIntensity={0.2} floatIntensity={0.6}>
-      <Icosahedron args={[1.1, 8]} ref={meshRef}>
-        <MeshTransmissionMaterial
-          transmission={1}
-          thickness={1.4}
-          roughness={0.05}
-          ior={1.45}
-          chromaticAberration={0.06}
-          anisotropy={0.2}
-          distortion={0.4}
-          distortionScale={0.5}
-          temporalDistortion={0.2}
-          backside
-          attenuationColor={dark ? "#5b21b6" : "#fde68a"}
-          attenuationDistance={2.4}
-          color={dark ? "#a78bfa" : "#fef3c7"}
-        />
-      </Icosahedron>
-    </Float>
+    <group ref={pathRef} position={[2.08, -0.2, 0]}>
+      <Float speed={0.5} rotationIntensity={0.12} floatIntensity={0.35}>
+        <Sphere args={[1.1, 96, 96]} ref={meshRef}>
+          <MeshTransmissionMaterial
+            transmission={0.98}
+            thickness={1.8}
+            roughness={0.16}
+            ior={1.42}
+            chromaticAberration={0.035}
+            anisotropy={0.12}
+            distortion={0.3}
+            distortionScale={0.35}
+            temporalDistortion={0.14}
+            clearcoat={0.7}
+            clearcoatRoughness={0.22}
+            resolution={512}
+            samples={6}
+            backside
+            attenuationColor={dark ? "#5b21b6" : "#fde68a"}
+            attenuationDistance={2.8}
+            color={dark ? "#a78bfa" : "#fef3c7"}
+          />
+        </Sphere>
+      </Float>
+    </group>
   );
 }
 
 export default function HeroCanvas() {
   const scrollRef = useScrollProgress();
-  const containerRef = useRef<HTMLDivElement>(null);
   const pointerVelocityRef = useRef({ x: 0, y: 0 });
   const previousPointerRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const containerEl = container;
-
     function handlePointerMove(event: PointerEvent) {
-      const rect = containerEl.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
+      const x = event.clientX;
+      const y = event.clientY;
       const previous = previousPointerRef.current;
 
       if (previous) {
@@ -135,19 +150,19 @@ export default function HeroCanvas() {
       previousPointerRef.current = null;
     }
 
-    containerEl.addEventListener("pointermove", handlePointerMove);
-    containerEl.addEventListener("pointerleave", resetPointer);
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("blur", resetPointer);
 
     return () => {
-      containerEl.removeEventListener("pointermove", handlePointerMove);
-      containerEl.removeEventListener("pointerleave", resetPointer);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("blur", resetPointer);
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="h-full w-full">
+    <div className="h-full w-full">
       <Canvas
-        dpr={[1, 1.75]}
+        dpr={[1, 1.5]}
         camera={{ position: [0, 0, 7], fov: 32 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
