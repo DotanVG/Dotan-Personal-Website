@@ -15,7 +15,11 @@ import {
   clampPetDrag,
   lookPose,
   scrollGesture,
+  startWalk,
+  walkFrame,
+  walkStep,
   type PetState,
+  type Walk,
 } from "@/lib/miniDotan";
 import { experience } from "@/content/experience";
 import styles from "./MiniDotan.module.css";
@@ -44,7 +48,7 @@ export function MiniDotan() {
   const [message, setMessage] = useState("");
   const [visible, setVisible] = useState(true);
   const [side, setSide] = useState<"left" | "right">("right");
-  const [walking, setWalking] = useState<"left" | "right" | null>(null);
+  const [dragging, setDragging] = useState(false);
   const drag = useRef<{
     id: number;
     startX: number;
@@ -56,6 +60,8 @@ export function MiniDotan() {
     x: number;
     y: number;
     lastX: number;
+    lastY: number;
+    walk: Walk;
     moved: boolean;
   } | null>(null);
   const dragFrame = useRef(0);
@@ -77,13 +83,14 @@ export function MiniDotan() {
     seen: new Set<string>(),
   });
   const formStatus = useRef<ContactStatus>("idle");
-  const diag = useRef({ frames: 0, scrolls: 0, hops: 0, greetings: 0 });
+  const diag = useRef({ frames: 0, scrolls: 0, hops: 0, greetings: 0, glances: 0 });
   const [debug, setDebug] = useState(false);
   const hidden = state === "hidden";
-  // No ambient animation (hops, glances, idle cycles).
-  const still = quiet || reduced || !visible;
-  // No unsolicited messages. Reduced motion alone doesn't silence him.
+  // Nothing unsolicited: no idle gestures, glances, scroll reactions or messages.
   const mute = quiet || !visible;
+  // Reduced motion keeps him in place: glances, a blink and held poses instead of
+  // bouncing or looping; sequences play only in direct response to the visitor
+  // (the walk follows their finger). Quiet mode on top of it makes him fully still.
 
   const finishDrag = useCallback((cancelled = false) => {
     const gesture = drag.current;
@@ -92,7 +99,7 @@ export function MiniDotan() {
     cancelAnimationFrame(dragFrame.current);
     dragFrame.current = 0;
     clearTimeout(walkPause.current);
-    setWalking(null);
+    setDragging(false);
     dock.current?.style.removeProperty("--drag-x");
     dock.current?.style.removeProperty("--drag-y");
     if (gesture.moved) {
@@ -135,6 +142,8 @@ export function MiniDotan() {
       x: rect.left,
       y: rect.top,
       lastX: event.clientX,
+      lastY: event.clientY,
+      walk: startWalk(1),
       moved: false,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -148,10 +157,20 @@ export function MiniDotan() {
     if (!gesture.moved && Math.hypot(dx, dy) < 12) return;
     if (!gesture.moved) {
       gesture.moved = true;
+      gesture.walk = startWalk(dx < 0 ? -1 : 1);
       setMessage("");
       setSettings(false);
       setState("idle");
-    }
+      setDragging(true);
+    } else
+      gesture.walk = walkStep(
+        gesture.walk,
+        event.clientX - gesture.lastX,
+        event.clientY - gesture.lastY,
+        performance.now(),
+      );
+    gesture.lastX = event.clientX;
+    gesture.lastY = event.clientY;
     const viewport = window.visualViewport;
     const next = clampPetDrag(
       gesture.left + dx,
@@ -164,13 +183,16 @@ export function MiniDotan() {
     );
     gesture.x = next.left;
     gesture.y = next.top;
-    const horizontal = event.clientX - gesture.lastX;
-    if (Math.abs(horizontal) > 2) {
-      setWalking(horizontal < 0 ? "left" : "right");
-      gesture.lastX = event.clientX;
-    }
+    // Painted directly: one React render per drag, not one per frame.
+    const walk = gesture.walk;
+    paint(...walkFrame(walk, quiet && reduced));
     clearTimeout(walkPause.current);
-    walkPause.current = setTimeout(() => setWalking(null), 160);
+    // Finger resting: face the way he was going (look poses 4 and 12).
+    if (!walk.carried && !(quiet && reduced))
+      walkPause.current = setTimeout(
+        () => drag.current === gesture && paint(walk.dir > 0 ? 9 : 10, 4),
+        150,
+      );
     if (!dragFrame.current)
       dragFrame.current = requestAnimationFrame(() => {
         dragFrame.current = 0;
@@ -201,8 +223,8 @@ export function MiniDotan() {
     if (mute && ["idle", "greeting", "hopping", "speaking"].includes(now)) {
       setMessage("");
       setState("idle");
-    } else if (still && now === "hopping") setState("idle");
-  }, [still, mute]);
+    } else if (reduced && now === "hopping") setState("idle");
+  }, [reduced, mute]);
 
   useEffect(() => {
     if (!ready) return;
@@ -253,24 +275,54 @@ export function MiniDotan() {
   }, []);
 
   useEffect(() => {
-    if (!ready || hidden) return;
+    // While dragged, moveDrag paints the walk itself.
+    if (!ready || hidden || dragging) return;
     paint();
     if (settings) return;
-    if (walking && reduced) {
-      paint(cycles[walking].row, 0);
-      return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stop = () => clearTimeout(timer);
+    // A glance (look rows 9+) wins over idle frames until it ends.
+    const looking = () =>
+      Number(sprite.current?.style.getPropertyValue("--row")) >= 9;
+    if (state === "idle" && mute) return;
+    if (reduced) {
+      if (quiet) return;
+      if (state === "idle") {
+        // Reduced motion: an occasional blink is his only idle animation.
+        const blink = () => {
+          timer = setTimeout(() => {
+            if (!looking()) paint(0, 3);
+            timer = setTimeout(() => {
+              if (!looking()) paint();
+              blink();
+            }, 140);
+          }, 6000 + Math.random() * 4000);
+        };
+        blink();
+        return stop;
+      }
+      if (state === "submitting") {
+        paint(cycles.submitting.row, 1);
+        return;
+      }
+      if (state === "greeting") {
+        paint(cycles.greeting.row, 1); // hand up, held
+        timer = setTimeout(() => {
+          paint();
+          setState("speaking");
+        }, 900);
+        return stop;
+      }
     }
-    if (still && !walking) return;
-    const cycle = cycles[walking ?? (state as keyof typeof cycles)];
+    // Opening the contact form gets one wave.
+    const cycle =
+      cycles[
+        (state === "contact-open" ? "greeting" : state) as keyof typeof cycles
+      ];
     if (!cycle) return;
-    let timer: ReturnType<typeof setTimeout>;
     let col = 0;
     const frame = () => {
-      if (
-        !walking &&
-        state === "idle" &&
-        Number(sprite.current?.style.getPropertyValue("--row")) >= 9
-      ) {
+      if (state === "idle" && looking()) {
         timer = setTimeout(frame, 250);
         return;
       }
@@ -278,10 +330,10 @@ export function MiniDotan() {
       timer = setTimeout(() => {
         col++;
         if (col < cycle.times.length) frame();
-        else if (walking || state === "idle" || state === "submitting") {
+        else if (state === "idle" || state === "submitting") {
           col = 0;
           paint();
-          timer = setTimeout(frame, !walking && state === "idle" ? idlePause() : 0);
+          timer = setTimeout(frame, state === "idle" ? idlePause() : 0);
         } else {
           paint();
           if (state === "greeting") setState("speaking");
@@ -290,14 +342,14 @@ export function MiniDotan() {
       }, cycle.times[col]);
     };
     // Begin idle with a still pause; direct reactions play immediately.
-    timer = setTimeout(frame, !walking && state === "idle" ? idlePause() : 0);
-    return () => clearTimeout(timer);
-  }, [state, still, reduced, hidden, ready, settings, walking]);
+    timer = setTimeout(frame, state === "idle" ? idlePause() : 0);
+    return stop;
+  }, [state, mute, quiet, reduced, hidden, ready, settings, dragging]);
 
   useEffect(() => {
     if (!ready || hidden || mute) return;
     let intent = 0,
-      lastScroll = 0,
+      lastScroll = -Infinity,
       suppressUntil = 0,
       lastActivity = performance.now();
     let gesture = {
@@ -308,18 +360,40 @@ export function MiniDotan() {
       lastHop: -Infinity,
     };
     let pointer: { x: number; y: number } | null = null;
-    let pose: number | null = null;
+    // One finger on the page (phones). Pointer events end in pointercancel once
+    // iOS starts panning, so this follows touch events instead.
+    let finger: {
+      x: number;
+      y: number;
+      x0: number;
+      y0: number;
+      v: number; // finger speed, px/ms
+      at: number;
+      down: boolean;
+      tap: boolean;
+      lift: number;
+      follow: boolean; // first gesture of a scroll session
+    } | null = null;
+    let pose: number | null = null,
+      posed = -Infinity;
     let raf = 0;
     let messageUntil = 0;
+    let lastY = window.scrollY,
+      speed = 0,
+      session = 0, // px scrolled this session (ends after 2.5 s without scrolling)
+      sessionHopped = false,
+      lastHop = -Infinity,
+      endHopped = false;
     const candidates = new Map<string, number>();
     const fine = matchMedia("(hover: hover) and (pointer: fine)");
-    // Drop a pointer-glance pose (rows 9+) without interrupting an idle gesture.
+    const coarse = matchMedia("(pointer: coarse)");
+    const ignored =
+      "[data-mini-dotan], input, textarea, select, [contenteditable=true]";
+    const looking = () =>
+      Number(sprite.current?.style.getPropertyValue("--row")) >= 9;
+    // Drop a glance pose (rows 9+) without interrupting an idle gesture.
     const clearLook = () => {
-      if (
-        current.current.state === "idle" &&
-        Number(sprite.current?.style.getPropertyValue("--row")) >= 9
-      )
-        paint();
+      if (current.current.state === "idle" && looking()) paint();
     };
     const busy = () =>
       !!drag.current ||
@@ -328,6 +402,41 @@ export function MiniDotan() {
       !!document.activeElement?.closest(
         "input, textarea, select, [contenteditable=true]",
       );
+    /** Glance toward a viewport point; reduced motion changes pose at most every 300 ms. */
+    const aim = (x: number, y: number, now: number, hysteresis = 20) => {
+      const rect = button.current?.getBoundingClientRect();
+      if (
+        !rect ||
+        busy() ||
+        current.current.state !== "idle" ||
+        now - posed < (reduced ? 300 : 0)
+      )
+        return;
+      const next = lookPose(
+        x - (rect.left + rect.width / 2),
+        y - (rect.top + rect.height * 0.25),
+        pose,
+        hysteresis,
+      );
+      if (next === pose && (next === null || looking())) return;
+      pose = next;
+      posed = now;
+      if (next === null) return clearLook();
+      if (DEBUG) diag.current.glances++;
+      paint(9 + Math.floor(next / 8), next % 8);
+    };
+    const neutral = () => {
+      pose = null;
+      clearLook();
+    };
+    const hop = (now: number) => {
+      if (DEBUG) diag.current.hops++;
+      lastHop = now;
+      sessionHopped = true;
+      messageUntil = 0;
+      setMessage("");
+      setState("hopping");
+    };
     const position = () =>
       Math.max(
         0,
@@ -346,15 +455,11 @@ export function MiniDotan() {
       };
       intent = 0;
       pointer = null;
-      clearLook();
+      // iOS resizes as its toolbar collapses mid-scroll; keep a finger glance.
+      if (!finger) neutral();
     };
     const userIntent = (event: Event) => {
-      if (
-        (event.target as Element)?.closest?.(
-          "[data-mini-dotan], input, textarea, select, [contenteditable=true]",
-        )
-      )
-        return;
+      if ((event.target as Element)?.closest?.(ignored)) return;
       if (
         event instanceof KeyboardEvent &&
         ![
@@ -374,7 +479,7 @@ export function MiniDotan() {
     const click = (event: Event) => {
       lastActivity = performance.now();
       pointer = null;
-      clearLook();
+      if (!finger) neutral(); // a tap's glance outlives its click
       if ((event.target as Element)?.closest?.('a[href*="#"]')) {
         suppressUntil = performance.now() + 1800;
         reset();
@@ -389,35 +494,143 @@ export function MiniDotan() {
           ? { x: event.clientX, y: event.clientY }
           : null;
     };
-    const leave = () => {
+    const leave = (event: PointerEvent) => {
+      // Touch pointers "leave" on every lift and when a pan starts; only a mouse
+      // leaving the window ends a glance.
+      if (event.pointerType !== "mouse") return;
       pointer = null;
-      pose = null;
-      clearLook();
+      neutral();
+    };
+    const touchStart = (event: TouchEvent) => {
+      const t = event.touches[0];
+      const now = performance.now();
+      lastActivity = now;
+      if (
+        event.touches.length !== 1 ||
+        (event.target as Element)?.closest?.(ignored) ||
+        busy()
+      ) {
+        // A second finger (pinch) or a form field: back to neutral.
+        if (finger) {
+          finger = null;
+          neutral();
+        }
+        return;
+      }
+      finger = {
+        x: t.clientX,
+        y: t.clientY,
+        x0: t.clientX,
+        y0: t.clientY,
+        v: 0,
+        at: now,
+        down: true,
+        tap: false,
+        lift: 0,
+        follow: now - lastScroll > 2500,
+      };
+      if (finger.follow) aim(t.clientX, t.clientY, now);
+    };
+    const touchMove = (event: TouchEvent) => {
+      userIntent(event);
+      const t = event.touches[0];
+      if (!finger?.down || event.touches.length !== 1 || !t) return;
+      const now = performance.now();
+      finger.v = Math.abs(t.clientY - finger.y) / Math.max(1, now - finger.at);
+      finger.x = t.clientX;
+      finger.y = t.clientY;
+      finger.at = now;
+    };
+    const touchEnd = (event: TouchEvent) => {
+      if (!finger?.down || event.touches.length) return;
+      const now = performance.now();
+      finger.down = false;
+      finger.lift = now;
+      finger.tap =
+        event.type === "touchend" &&
+        Math.hypot(finger.x - finger.x0, finger.y - finger.y0) < 10;
+      // Every tap gets a glance, even mid-reading.
+      if (finger.tap) aim(finger.x, finger.y, now);
+      // Phones scroll 500-3000 px a flick, so no hop per 100 px: only a hard
+      // fling after at least a screenful, rarely, and never over a message.
+      else if (
+        !reduced &&
+        now - finger.at < 100 &&
+        finger.v >= 1.5 &&
+        session >= innerHeight &&
+        !sessionHopped &&
+        now - lastHop >= 30000 &&
+        !messageUntil &&
+        now > suppressUntil &&
+        !busy() &&
+        current.current.state === "idle"
+      )
+        hop(now);
+    };
+    /** Glance at the mouse, a held finger, a tap, or the page while it coasts. */
+    const updateLook = (now: number) => {
+      if (pointer) {
+        if (now - lastScroll > 350) aim(pointer.x, pointer.y, now, 15);
+        return;
+      }
+      if (!finger) return;
+      const end = finger.down
+        ? Infinity
+        : finger.tap
+          ? finger.lift + 700
+          : Math.max(finger.lift, lastScroll) + 500;
+      if (now >= end) {
+        finger = null;
+        neutral();
+        return;
+      }
+      // Reduced motion: the first glance is held, not updated.
+      if (reduced) return;
+      if (finger.down) {
+        if (finger.follow && now - posed >= 200) aim(finger.x, finger.y, now);
+      } else if (!finger.tap && speed > 0.5) {
+        // Still coasting after the flick: he watches the page go by.
+        aim(innerWidth / 2, innerHeight / 2, now);
+      }
     };
     const scroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        const now = performance.now();
+        const now = performance.now(),
+          y = position();
+        if (now - lastScroll > 2500) {
+          session = 0;
+          sessionHopped = false;
+        }
+        speed = Math.abs(y - lastY) / Math.max(16, now - lastScroll);
+        session += Math.abs(y - lastY);
+        lastY = y;
         lastScroll = now;
         lastActivity = now;
         pointer = null;
         if (DEBUG) diag.current.scrolls++;
-        // Only a glance pose is dropped; an idle gesture keeps playing while scrolling.
-        clearLook();
+        // The mouse glance ends; a finger glance carries on. An idle gesture keeps playing.
+        if (!finger) neutral();
         const eligible =
+          !reduced &&
           intent > 0 &&
-          now - intent < 900 &&
+          now - intent < (coarse.matches ? 3000 : 900) &&
           now > suppressUntil &&
           !busy() &&
           ["idle", "greeting", "speaking"].includes(current.current.state);
-        const next = scrollGesture(gesture, position(), now, eligible && !still);
-        gesture = next;
-        if (next.hop) {
-          if (DEBUG) diag.current.hops++;
-          messageUntil = 0;
-          setMessage("");
-          setState("hopping");
+        if (!coarse.matches) {
+          const next = scrollGesture(gesture, y, now, eligible);
+          gesture = next;
+          if (next.hop) hop(now);
+        } else if (
+          eligible &&
+          !endHopped &&
+          !messageUntil &&
+          y >= document.documentElement.scrollHeight - innerHeight - 2
+        ) {
+          endHopped = true; // one hop for reaching the end of the page
+          hop(now);
         }
       });
     };
@@ -444,18 +657,7 @@ export function MiniDotan() {
           setState("idle");
       }
       if (current.current.state !== "idle") return;
-      if (pointer && !still && now - lastScroll > 350) {
-        const rect = button.current?.getBoundingClientRect();
-        if (rect) {
-          pose = lookPose(
-            pointer.x - (rect.left + rect.width / 2),
-            pointer.y - (rect.top + rect.height * 0.25),
-            pose,
-          );
-          if (pose === null) paint();
-          else paint(9 + Math.floor(pose / 8), pose % 8);
-        }
-      }
+      updateLook(now);
       const b = budget.current;
       if (
         b.count >= 3 ||
@@ -485,6 +687,8 @@ export function MiniDotan() {
         b.count++;
         b.last = now;
         pointer = null;
+        finger = null;
+        pose = null;
         paint();
         setMessage(line);
         messageUntil = now + 8500;
@@ -494,7 +698,10 @@ export function MiniDotan() {
     document.addEventListener("pointerleave", leave);
     window.addEventListener("scroll", scroll, { passive: true });
     window.addEventListener("wheel", userIntent, { passive: true });
-    window.addEventListener("touchmove", userIntent, { passive: true });
+    window.addEventListener("touchstart", touchStart, { passive: true });
+    window.addEventListener("touchmove", touchMove, { passive: true });
+    window.addEventListener("touchend", touchEnd, { passive: true });
+    window.addEventListener("touchcancel", touchEnd, { passive: true });
     window.addEventListener("keydown", userIntent);
     window.addEventListener("pointerdown", click, { passive: true });
     window.addEventListener("click", click);
@@ -508,14 +715,17 @@ export function MiniDotan() {
       document.removeEventListener("pointerleave", leave);
       window.removeEventListener("scroll", scroll);
       window.removeEventListener("wheel", userIntent);
-      window.removeEventListener("touchmove", userIntent);
+      window.removeEventListener("touchstart", touchStart);
+      window.removeEventListener("touchmove", touchMove);
+      window.removeEventListener("touchend", touchEnd);
+      window.removeEventListener("touchcancel", touchEnd);
       window.removeEventListener("keydown", userIntent);
       window.removeEventListener("pointerdown", click);
       window.removeEventListener("click", click);
       window.removeEventListener("resize", reset);
       window.visualViewport?.removeEventListener("resize", reset);
     };
-  }, [ready, hidden, still, mute]);
+  }, [ready, hidden, reduced, mute]);
 
   useEffect(() => {
     if (!open) return;
@@ -562,7 +772,7 @@ export function MiniDotan() {
           reducedMotion: reduced,
           tabVisible: visible,
           state,
-          walking: walking ?? "-",
+          dragging,
           frame: `${sprite.current?.style.getPropertyValue("--row") || 0},${sprite.current?.style.getPropertyValue("--col") || 0}`,
           ...diag.current,
         })}
