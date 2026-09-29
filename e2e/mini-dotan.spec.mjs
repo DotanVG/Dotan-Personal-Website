@@ -338,7 +338,7 @@ test("entrance: skipped in quiet mode; reduced motion just appears", { timeout: 
   assert.equal(calm.states.at(-1), "idle");
 });
 
-test("settings are just quiet mode and hide; arrow keys change corners", { timeout: 60000 }, async () => {
+test("settings and arrow keys offer all four docks", { timeout: 60000 }, async () => {
   const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
   try {
     await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
@@ -347,20 +347,175 @@ test("settings are just quiet mode and hide; arrow keys change corners", { timeo
     await pet.waitFor({ timeout: 30000 });
     await dock.locator("button[aria-label='Mini Dotan settings']").click();
     const items = await dock.locator("[class*=settings] button").allInnerTexts();
-    assert.deepEqual(items.map((t) => t.replace(/\s+/g, " ").trim()), ["Quiet mode Off", "Hide Mini Dotan"]);
+    assert.deepEqual(items.map((t) => t.replace(/\s+/g, " ").trim()), ["Quiet mode Off", "Dock at top", "Hide Mini Dotan"]);
     await page.keyboard.press("Escape");
     await pet.focus();
     await page.keyboard.press("ArrowLeft");
     assert.equal(await dock.getAttribute("data-side"), "left");
     await page.keyboard.press("ArrowRight");
     assert.equal(await dock.getAttribute("data-side"), "right");
+    await page.keyboard.press("ArrowUp");
+    assert.equal(await dock.getAttribute("data-edge"), "top");
+    await page.keyboard.press("ArrowDown");
+    assert.equal(await dock.getAttribute("data-edge"), "bottom");
     assert.equal(await page.locator("footer").getByText("Show Mini Dotan").count(), 0, "footer link removed");
   } finally {
     await browser.close();
   }
 });
 
-test("dragged up or down, he jumps through the whole hop", { timeout: 60000 }, async () => {
+test("top dock persists, opens its form below, types without stealing focus, and settles", { timeout: 60000 }, async () => {
+  const { browser, page, logs } = await launch({ width: 390, height: 844, mobile: true });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const dock = page.locator("[data-mini-dotan]");
+    const pet = dock.getByRole("button", { name: "Contact Dotan", exact: true });
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1400);
+    await pet.focus();
+    await page.keyboard.press("ArrowUp");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1500);
+    assert.equal(await dock.getAttribute("data-edge"), "top");
+    const sprite = dock.locator("[data-pose]");
+    assert.equal(await sprite.getAttribute("data-pose"), "perching");
+    await pet.tap();
+    const dialog = dock.getByRole("dialog", { name: "Contact Dotan" });
+    await dialog.waitFor();
+    const bounds = await dialog.boundingBox();
+    const character = await pet.boundingBox();
+    assert.ok(bounds.y >= character.y + character.height && bounds.y + bounds.height <= 844, JSON.stringify({ bounds, character }));
+    const name = dialog.locator('input[name="name"]');
+    await name.fill("Browser check");
+    await page.waitForFunction(() => document.querySelector('[data-mini-dotan] [data-pose="typing"]'));
+    assert.equal(await name.evaluate((el) => el === document.activeElement), true);
+    await sleep(1400);
+    assert.equal(await sprite.getAttribute("data-pose"), "perching", "returns to the top pose after typing stops");
+    await page.keyboard.press("Escape");
+    await dock.getByRole("button", { name: "Mini Dotan settings" }).tap();
+    await dock.getByRole("button", { name: "Quiet mode" }).tap();
+    await page.keyboard.press("Escape");
+    await pet.tap();
+    await name.fill("Still quiet");
+    assert.equal(await sprite.getAttribute("data-pose"), "perching", "quiet mode does not react to typing");
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: /^explore$/i }).click();
+    await page.waitForURL(/mode=explore/);
+    assert.equal(await dock.count(), 0, "companion unmounts in Explore");
+    await page.getByRole("button", { name: "Clean view", exact: true }).first().click({ timeout: 30000 });
+    await pet.waitFor({ timeout: 30000 });
+    assert.equal(await dock.getAttribute("data-edge"), "top", "top preference survives Explore");
+    await pet.tap();
+    await name.fill("Back from Explore");
+    assert.equal(await sprite.getAttribute("data-pose"), "perching", "quiet preference survives Explore");
+    assert.deepEqual(realErrors(logs), []);
+  } finally {
+    await browser.close();
+  }
+});
+
+test("reduced motion holds the laptop pose and password entry is ignored", { timeout: 60000 }, async () => {
+  const { browser, page } = await launch({ reducedMotion: "reduce" });
+  try {
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const dock = page.locator("[data-mini-dotan]");
+    const pet = dock.getByRole("button", { name: "Contact Dotan", exact: true });
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1200);
+    await pet.click();
+    const name = dock.locator('input[name="name"]');
+    await name.fill("Calm typing");
+    const sprite = dock.locator("[data-pose]");
+    await page.waitForFunction(() => document.querySelector('[data-mini-dotan] [data-pose="typing"]'));
+    const first = await frame(page);
+    await sleep(500);
+    assert.deepEqual(await frame(page), first, "laptop does not loop under reduced motion");
+    await sleep(900);
+    assert.notEqual(await sprite.getAttribute("data-pose"), "typing", "typing expires after inactivity");
+    // A temporary password field verifies we never react to secrets in future forms.
+    // Keep it outside React: mutating the form's text input type gets restored by
+    // React before its input event, so it would test ordinary text entry instead.
+    await page.evaluate(() => {
+      const input = document.createElement("input");
+      input.type = "password";
+      input.id = "password-privacy-check";
+      input.setAttribute("aria-label", "Password privacy check");
+      input.style.cssText = "position:fixed;top:100px;left:100px;z-index:100";
+      document.body.append(input);
+    });
+    const password = page.locator("#password-privacy-check");
+    await password.fill("not-observed");
+    assert.equal(await password.getAttribute("type"), "password");
+    assert.notEqual(await sprite.getAttribute("data-pose"), "typing");
+  } finally {
+    await browser.close();
+  }
+});
+
+test("320px top form remains reachable above the keyboard; a real pending request wins over typing", { timeout: 60000 }, async () => {
+  const { browser, page } = await launch({ width: 320, height: 568, mobile: true, init: () => localStorage.setItem("mini-dotan-top", "true") });
+  let respond;
+  try {
+    // Exercise the real form fetch, holding its response without sending a message.
+    await page.route("https://formspree.io/**", async (route) => {
+      const status = await new Promise((resolve) => { respond = resolve; });
+      await route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ ok: status === 200 }) });
+    });
+    await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+    const dock = page.locator("[data-mini-dotan]");
+    const pet = dock.getByRole("button", { name: "Contact Dotan", exact: true });
+    await pet.waitFor({ timeout: 30000 });
+    await sleep(1400);
+    await pet.tap();
+    const dialog = dock.getByRole("dialog", { name: "Contact Dotan" });
+    // CDP cannot open the system keyboard; emit its visual-viewport resize while
+    // retaining the layout viewport, including its browser pan offset.
+    await page.evaluate(() => {
+      Object.defineProperty(visualViewport, "height", { configurable: true, value: 250 });
+      Object.defineProperty(visualViewport, "offsetTop", { configurable: true, value: 40 });
+      visualViewport.dispatchEvent(new Event("resize"));
+    });
+    await sleep(100);
+    const bounds = await dialog.boundingBox();
+    assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 320 && bounds.y >= 40 && bounds.y + bounds.height <= 290, JSON.stringify(bounds));
+    const name = dialog.locator('input[name="name"]');
+    await name.fill("Viewport check");
+    await dialog.locator('input[name="_replyto"]').fill("test@example.com");
+    await dialog.locator('textarea[name="message"]').fill("Browser-only mocked submission.");
+    assert.equal(await dock.locator("[data-pose]").getAttribute("data-pose"), "typing");
+    const send = dialog.getByRole("button", { name: "Send message" });
+    await send.scrollIntoViewIfNeeded();
+    const hit = await send.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { height: r.height, bottom: r.bottom, hit: el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)) };
+    });
+    assert.ok(hit.hit && hit.height >= 44 && hit.bottom <= 290, JSON.stringify(hit));
+    await send.tap();
+    await page.waitForFunction(() => document.querySelector("[data-mini-dotan]")?.dataset.state === "submitting");
+    await page.waitForFunction(() => document.querySelector("[data-mini-dotan] [data-pose]")?.style.getPropertyValue("--row") === "7");
+    assert.equal(await dock.locator("[data-pose]").getAttribute("data-pose"), "original", "pending request owns the sprite");
+    assert.equal(await name.isDisabled(), true);
+    while (!respond) await sleep(20);
+    respond(503);
+    await dialog.getByRole("alert").waitFor();
+    assert.equal(await dock.getAttribute("data-state"), "error");
+    assert.equal(await name.inputValue(), "Viewport check", "failed request preserves the draft");
+    await page.waitForFunction(() => document.querySelector('[data-mini-dotan] [data-pose="perching"]'));
+    respond = undefined;
+    await send.tap();
+    while (!respond) await sleep(20);
+    respond(200);
+    await dialog.getByRole("status").waitFor();
+    assert.equal(await dock.getAttribute("data-state"), "success");
+    await page.waitForFunction(() => document.querySelector('[data-mini-dotan] [data-pose="perching"]'));
+  } finally {
+    respond?.(503);
+    await browser.close();
+  }
+});
+
+test("dragged vertically, he flies through six thruster frames and docks at the top", { timeout: 60000 }, async () => {
   const { browser, page } = await launch({ width: 390, height: 844, mobile: true });
   try {
     await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
@@ -377,11 +532,12 @@ test("dragged up or down, he jumps through the whole hop", { timeout: 60000 }, a
       y -= 12;
       await touch.move(1, x, y);
       await sleep(70);
-      frames.push(await frame(page));
+      frames.push(await page.locator("[data-mini-dotan] [data-pose]").evaluate((el) => [el.dataset.pose, Number(el.style.getPropertyValue("--col"))]));
     }
     await touch.up(1);
-    const cols = new Set(frames.filter(([row]) => row === 4).map(([, col]) => col));
-    assert.equal(cols.size, 5, `all five jump frames (${JSON.stringify(frames)})`);
+    const cols = new Set(frames.filter(([pose]) => pose === "flying").map(([, col]) => col));
+    assert.equal(cols.size, 6, `all six flight frames (${JSON.stringify(frames)})`);
+    assert.equal(await page.locator("[data-mini-dotan]").getAttribute("data-edge"), "top");
   } finally {
     await browser.close();
   }

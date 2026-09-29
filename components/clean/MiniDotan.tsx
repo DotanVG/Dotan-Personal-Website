@@ -51,6 +51,10 @@ export function MiniDotan() {
   const [visible, setVisible] = useState(true);
   const [side, setSide] = useState<"left" | "right">("right");
   const [dragging, setDragging] = useState(false);
+  const [edge, setEdge] = useState<"top" | "bottom">("bottom");
+  const [typing, setTyping] = useState(false);
+  const [assetRevision, setAssetRevision] = useState(0);
+  const loadedAssets = useRef(new Set<string>());
   const [arriving, setArriving] = useState(false);
   const drag = useRef<{
     id: number;
@@ -87,8 +91,8 @@ export function MiniDotan() {
   const sprite = useRef<HTMLSpanElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLElement>(null);
-  const current = useRef({ state, open, settings });
-  current.current = { state, open, settings };
+  const current = useRef({ state, open, settings, typing, edge });
+  current.current = { state, open, settings, typing, edge };
   const budget = useRef({
     count: 0,
     last: -Infinity,
@@ -133,6 +137,8 @@ export function MiniDotan() {
           24,
         );
         setSide(next.side);
+        setEdge(next.edge);
+        preference("top", next.edge === "top");
         preference("left", next.side === "left");
       }
     }
@@ -219,7 +225,8 @@ export function MiniDotan() {
     gesture.y = next.top;
     // Painted directly: one React render per drag, not one per frame.
     const walk = gesture.walk;
-    paint(...walkFrame(walk, quiet && reduced, reduced));
+    if (walk.carried) paint(0, reduced ? 0 : walk.col % 6, "flying");
+    else paint(...walkFrame(walk, quiet && reduced, reduced));
     clearTimeout(walkPause.current);
     // Finger resting: face the way he was going (look poses 4 and 12).
     if (!walk.carried && !(quiet && reduced))
@@ -263,7 +270,7 @@ export function MiniDotan() {
       ],
       { duration: 200, easing: "cubic-bezier(0.2, 0, 0, 1)" },
     );
-  }, [side, dragging, reduced]);
+  }, [side, edge, dragging, reduced]);
 
   /** Back from hidden: he jumps up from below the screen; the button whirls. */
   const summon = useCallback(() => {
@@ -305,7 +312,9 @@ export function MiniDotan() {
     const resize = () => {
       finishDrag(true);
       const height = viewport?.height ?? innerHeight;
+      dock.current?.toggleAttribute("data-compact-viewport", height < 360);
       dock.current?.style.setProperty("--available-height", `${height}px`);
+      dock.current?.style.setProperty("--viewport-top", `${viewport?.offsetTop ?? 0}px`);
       dock.current?.style.setProperty(
         "--keyboard",
         `${Math.max(0, innerHeight - height - (viewport?.offsetTop ?? 0))}px`,
@@ -320,17 +329,43 @@ export function MiniDotan() {
     };
   }, [ready, finishDrag]);
 
-  function paint(row = 0, col = 0) {
+  function paint(row = 0, col = 0, pose = "original") {
+    // Keep the familiar atlas visible until a special strip is fully decoded.
+    if (pose !== "original" && !loadedAssets.current.has(pose)) {
+      pose = "original";
+      row = col = 0;
+    }
+    if (sprite.current) sprite.current.dataset.pose = pose;
     if (DEBUG && (row || col)) diag.current.frames++;
     sprite.current?.style.setProperty("--row", String(row));
     sprite.current?.style.setProperty("--col", String(col));
   }
 
+  useEffect(() => {
+    let active = true;
+    const images = ["perching", "flying", "typing"].map((pose) => {
+      const image = new Image();
+      image.onload = () => {
+        void image.decode().then(() => {
+          if (!active || image.naturalWidth !== 1152 || image.naturalHeight !== 208) return;
+          loadedAssets.current.add(pose);
+          setAssetRevision((n) => n + 1);
+        }).catch(() => {});
+      };
+      image.src = `/pets/mini-dotan/${pose}.webp`;
+      return image;
+    });
+    return () => {
+      active = false;
+      images.forEach((image) => { image.onload = null; });
+    };
+  }, []);
 
   useEffect(() => {
     const quietly = preference("quiet");
     setQuiet(quietly);
     setSide(preference("left") ? "left" : "right");
+    setEdge(preference("top") ? "top" : "bottom");
     // Entrance: unless hidden or quiet, he starts as the face button and jumps
     // in from below (the summon whirl) once the page has loaded and is on screen.
     const entrance = !preference("hidden") && !quietly;
@@ -364,12 +399,68 @@ export function MiniDotan() {
   }, [summon]);
 
   useEffect(() => {
+    if (!ready || hidden || mute) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const activity = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || drag.current || current.current.settings) return;
+      if (target.closest('input[type="password"]')) return;
+      const editable = target.closest('input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"]');
+      if (event instanceof KeyboardEvent) {
+        if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+        if (!(event.key.length === 1 || event.key === "Backspace" || event.key === "Delete")) return;
+        if (!editable && target.closest("button, a, select, [data-mini-dotan]")) return;
+      } else if (!editable) return;
+      // Observe activity only: never read, retain, or send the entered value.
+      setTyping(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setTyping(false), 1200);
+    };
+    const stop = () => {
+      clearTimeout(timer);
+      setTyping(false);
+    };
+    window.addEventListener("keydown", activity);
+    window.addEventListener("input", activity);
+    window.addEventListener("blur", stop);
+    return () => {
+      stop();
+      window.removeEventListener("keydown", activity);
+      window.removeEventListener("input", activity);
+      window.removeEventListener("blur", stop);
+    };
+  }, [ready, hidden, mute]);
+
+  useEffect(() => {
     // While dragged, moveDrag paints the walk itself.
-    if (!ready || hidden || dragging) return;
-    paint();
-    if (settings) return;
+    if (!ready || hidden) return;
+    if (dragging) {
+      const walk = drag.current?.walk;
+      if (walk?.carried) paint(0, reduced ? 0 : walk.col % 6, "flying");
+      return;
+    }
     let timer: ReturnType<typeof setTimeout> | undefined;
     const stop = () => clearTimeout(timer);
+    const important = ["submitting", "success", "error"].includes(state);
+    const special = !important && typing && !mute
+      ? "typing"
+      : edge === "top" && !important ? "perching" : null;
+    if (special) {
+      let col = 1;
+      const frame = () => {
+        paint(0, col, special);
+        const delay = special === "typing" ? 140 : col === 0 ? 3500 : 220;
+        col = col === 5 ? special === "typing" ? 1 : 0 : col + 1;
+        timer = setTimeout(frame, delay);
+      };
+      paint(0, special === "typing" && reduced ? 1 : 0, special);
+      if (!mute && !reduced && !settings) timer = setTimeout(frame, special === "typing" ? 140 : 3500);
+      // A perching greeting uses the bubble without changing into an upright wave.
+      if (state === "greeting" || state === "hopping") setState(state === "greeting" ? "speaking" : "idle");
+      return stop;
+    }
+    paint(0, 0, edge === "top" && state !== "submitting" ? "perching" : "original");
+    if (settings) return;
     // A glance (look rows 9+) wins over idle frames until it ends.
     const looking = () =>
       Number(sprite.current?.style.getPropertyValue("--row")) >= 9;
@@ -424,7 +515,7 @@ export function MiniDotan() {
           paint();
           timer = setTimeout(frame, state === "idle" ? idlePause() : 0);
         } else {
-          paint();
+          paint(0, 0, edge === "top" ? "perching" : "original");
           if (state === "greeting") setState("speaking");
           if (state === "hopping") setState("idle");
         }
@@ -433,7 +524,7 @@ export function MiniDotan() {
     // Begin idle with a still pause; direct reactions play immediately.
     timer = setTimeout(frame, state === "idle" ? idlePause() : 0);
     return stop;
-  }, [state, mute, quiet, reduced, hidden, ready, settings, dragging]);
+  }, [state, mute, quiet, reduced, hidden, ready, settings, dragging, typing, edge, assetRevision]);
 
   useEffect(() => {
     if (!ready || hidden || mute) return;
@@ -479,6 +570,7 @@ export function MiniDotan() {
     };
     const busy = () =>
       !!drag.current ||
+      current.current.typing ||
       current.current.open ||
       current.current.settings ||
       !!document.activeElement?.closest(
@@ -489,6 +581,7 @@ export function MiniDotan() {
       const rect = button.current?.getBoundingClientRect();
       if (
         !rect ||
+        current.current.edge === "top" ||
         busy() ||
         current.current.state !== "idle" ||
         now - posed < (reduced ? 300 : 0)
@@ -675,6 +768,7 @@ export function MiniDotan() {
         // lifts, so touch intent lasts longer; one hop per swipe either way.
         const eligible =
           !reduced &&
+          current.current.edge !== "top" &&
           intent > 0 &&
           now - intent < (coarse.matches ? 3000 : 900) &&
           now > suppressUntil &&
@@ -746,7 +840,7 @@ export function MiniDotan() {
         pointer = null;
         finger = null;
         pose = null;
-        paint();
+        if (current.current.edge !== "top") paint();
         setMessage(line);
         messageUntil = now + 8500;
       }
@@ -840,6 +934,8 @@ export function MiniDotan() {
       data-mini-dotan
       data-state={state}
       data-side={side}
+      data-edge={edge}
+      data-dragging={dragging || undefined}
       data-arriving={arriving || undefined}
       className={styles.dock}
       aria-label="Mini Dotan companion"
@@ -896,6 +992,16 @@ export function MiniDotan() {
           <button
             type="button"
             onClick={() => {
+              const next = edge === "top" ? "bottom" : "top";
+              setEdge(next);
+              preference("top", next === "top");
+            }}
+          >
+            Dock at {edge === "top" ? "bottom" : "top"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               preference("hidden", true);
               setSettings(false);
               setMessage("");
@@ -929,8 +1035,15 @@ export function MiniDotan() {
           onLostPointerCapture={(event) => {
             if (drag.current?.id === event.pointerId) finishDrag(true);
           }}
-          // The non-drag way to change corners (the settings button for it is gone).
+          // Keyboard movement doesn't require dragging.
           onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              event.preventDefault();
+              const next = event.key === "ArrowUp" ? "top" : "bottom";
+              setEdge(next);
+              preference("top", next === "top");
+              return;
+            }
             const next =
               event.key === "ArrowLeft"
                 ? "left"
@@ -965,7 +1078,7 @@ export function MiniDotan() {
           )}
           <span id="mini-dotan-drag-help" className="sr-only">
             Tap to contact Dotan. Drag, or press the left or right arrow key, to
-            move him to either bottom corner.{quiet ? " Quiet mode is on." : ""}
+            move him to either side. Up and down arrows dock him at the top or bottom.{quiet ? " Quiet mode is on." : ""}
           </span>
         </button>
         )}
@@ -1034,7 +1147,7 @@ function MiniDebug({ read }: { read: () => Record<string, string | number | bool
         style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, background: "#fff", color: "#000" }}
         onClick={() => {
           try {
-            ["quiet", "left", "hidden"].forEach((k) => localStorage.removeItem(`mini-dotan-${k}`));
+            ["quiet", "left", "top", "hidden"].forEach((k) => localStorage.removeItem(`mini-dotan-${k}`));
           } catch {
             // storage blocked
           }

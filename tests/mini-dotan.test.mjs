@@ -16,19 +16,23 @@ test("mobile drag stays within the viewport and selects the nearest dock", () =>
     left: 24,
     top: 72,
     side: "left",
+    edge: "top",
   });
   assert.deepEqual(clampPetDrag(900, 900, 100, 88, 320, 568, 24), {
     left: 196,
     top: 456,
     side: "right",
+    edge: "bottom",
   });
   assert.equal(clampPetDrag(60, 200, 100, 88, 390, 844, 24).side, "left");
   assert.equal(clampPetDrag(240, 200, 100, 88, 390, 844, 24).side, "right");
+  assert.equal(clampPetDrag(240, 377, 100, 88, 390, 844, 24).edge, "top");
+  assert.equal(clampPetDrag(240, 378, 100, 88, 390, 844, 24).edge, "bottom");
 });
 
 test("touch drag lifts him 40 px above the finger, centred, clamped, never flipped", () => {
   // 56x88 pet, 390x844 phone.
-  assert.deepEqual(liftTarget(200, 600, 56, 88, 390, 844), { left: 172, top: 472, side: "right" });
+  assert.deepEqual(liftTarget(200, 600, 56, 88, 390, 844), { left: 172, top: 472, side: "right", edge: "bottom" });
   // Finger high up: clamped at the top (72), not flipped under the finger.
   assert.equal(liftTarget(200, 100, 56, 88, 390, 844).top, 72);
   // Edges: clamped 24 px in.

@@ -15,6 +15,21 @@
 .dock[data-side="left"] .controls {
   justify-content: flex-start;
 }
+.dock[data-edge="top"] {
+  --top-gap: calc(72px + env(safe-area-inset-top));
+  top: calc(var(--top-gap) + var(--viewport-top, 0px));
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+}
+.dock[data-edge="top"] .controls {
+  order: -1;
+}
+.dock[data-edge="top"] .bubble {
+  margin-top: 12px;
+  margin-bottom: 0;
+  max-height: calc(var(--available-height, 100dvh) - var(--height) - var(--top-gap) - 24px);
+}
 .bubble[hidden] {
   display: none;
 }
@@ -29,6 +44,7 @@
   -webkit-touch-callout: none;
   position: relative;
   width: calc(var(--height) * 0.64);
+  min-width: 44px;
   height: var(--height);
   pointer-events: auto;
   border-radius: 22px;
@@ -52,6 +68,20 @@
   transition:
     transform 200ms cubic-bezier(0.2, 0, 0, 1),
     filter 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.sprite[data-pose="perching"],
+.sprite[data-pose="flying"],
+.sprite[data-pose="typing"] {
+  background-size: calc(var(--height) * 1152 / 208) var(--height);
+}
+.sprite[data-pose="perching"] {
+  background-image: url("/pets/mini-dotan/perching.webp");
+}
+.sprite[data-pose="flying"] {
+  background-image: url("/pets/mini-dotan/flying.webp");
+}
+.sprite[data-pose="typing"] {
+  background-image: url("/pets/mini-dotan/typing.webp");
 }
 /* Held above the finger (touch drag): a small lift with a soft shadow. */
 .dock[data-lifted] .sprite {
@@ -118,6 +148,13 @@
    upright (0-800 ms), then shrinks into the eye as the dots grow out. */
 .dock[data-arriving] .pet {
   animation: arrive 850ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+.dock[data-edge="top"][data-arriving] .pet {
+  animation: descend 650ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes descend {
+  from { transform: translateY(calc(-1 * var(--height) - 48px)); }
+  to { transform: translateY(0); }
 }
 .dock[data-arriving] .gear {
   animation: whirl 800ms cubic-bezier(0.45, 0, 0.25, 1);
@@ -229,6 +266,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 12px 0 16px;
+}
+/* A keyboard can leave less than 300px: give the form space and let its
+   heading scroll away so it cannot cover the active field or Send button. */
+.dock[data-compact-viewport]:has(.bubble:not([hidden])[role="dialog"]) {
+  --height: 64px;
+}
+.dock[data-compact-viewport] .heading {
+  position: static;
 }
 .heading strong {
   font-family: var(--font-display), sans-serif;

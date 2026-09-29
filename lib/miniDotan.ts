@@ -34,6 +34,7 @@ export function clampPetDrag(
   return {
     left,
     top,
+    edge: top + height / 2 < viewportHeight / 2 ? ("top" as const) : ("bottom" as const),
     side:
       left + width / 2 < viewportWidth / 2
         ? ("left" as const)
@@ -130,7 +131,7 @@ export function walkStep(w: Walk, dx: number, dy: number, now: number): Walk {
   travel += Math.abs(carried ? dy : dx);
   // One frame per 12 px, at most one per 60 ms; distance beyond that is dropped.
   if (travel >= 12 && now - at >= 60) {
-    col = (col + 1) % 40; // 40: a whole number of walk (8) and jump (5) cycles
+    col = (col + 1) % 120; // Whole walk (8), jump (5) and flight (6) cycles.
     travel = 0;
     at = now;
   }
