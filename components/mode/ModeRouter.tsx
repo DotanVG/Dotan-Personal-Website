@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useApp } from "@/lib/store";
 import { LoadingScreen } from "@/components/explore/LoadingScreen";
 import { MiniDotan } from "@/components/clean/MiniDotan";
@@ -19,6 +19,7 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   const mode = useApp((s) => s.mode);
   const setMode = useApp((s) => s.setMode);
   const [hydrated, setHydrated] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -38,18 +39,15 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
     return () => window.removeEventListener("popstate", onPop);
   }, [setMode]);
 
-  if (!hydrated) {
-    return <>{cleanContent}</>;
-  }
-
   // Enter fades only: an exit animation under AnimatePresence "wait" never completed
   // (nested presence in the clean tree), which stranded in-page mode switches.
   return mode === "clean" ? (
     <>
-      <MiniDotan />
+      {hydrated && <MiniDotan />}
       <motion.div
         key="clean"
-        initial={{ opacity: 0 }}
+        // Keep the server-rendered tree mounted and visible through hydration.
+        initial={hydrated && !reducedMotion ? { opacity: 0 } : false}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
@@ -59,7 +57,7 @@ export function ModeRouter({ cleanContent }: { cleanContent: ReactNode }) {
   ) : (
     <motion.div
       key="explore"
-      initial={{ opacity: 0 }}
+      initial={reducedMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
