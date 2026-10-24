@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
 import { Button } from "@/components/ui/Button";
@@ -8,6 +8,7 @@ import { Magnetic } from "@/components/ui/Magnetic";
 
 export function Hero() {
   const [roleIdx, setRoleIdx] = useState(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const id = setInterval(
@@ -43,8 +44,8 @@ export function Hero() {
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reducedMotion ? false : { y: 24 }}
+            animate={{ y: 0 }}
             transition={{ duration: 0.8, delay: 0.05 }}
             className="hero-headline font-display text-[clamp(3rem,11vw,9rem)] font-semibold text-balance"
           >
@@ -79,8 +80,8 @@ export function Hero() {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reducedMotion ? false : { y: 12 }}
+            animate={{ y: 0 }}
             transition={{ duration: 0.6, delay: 0.55 }}
             className="mt-8 max-w-xl text-pretty text-base text-ink/75 md:text-lg"
           >
