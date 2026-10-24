@@ -342,6 +342,7 @@ export function MiniDotan() {
   }
 
   useEffect(() => {
+    if (!ready) return;
     let active = true;
     const images = ["perching", "flying", "typing"].map((pose) => {
       const image = new Image();
@@ -359,7 +360,7 @@ export function MiniDotan() {
       active = false;
       images.forEach((image) => { image.onload = null; });
     };
-  }, []);
+  }, [ready]);
 
   useEffect(() => {
     const quietly = preference("quiet");
@@ -370,18 +371,29 @@ export function MiniDotan() {
     // in from below (the summon whirl) once the page has loaded and is on screen.
     const entrance = !preference("hidden") && !quietly;
     if (entrance || preference("hidden")) setState("hidden");
-    setReady(true);
     if (DEBUG) setDebug(new URLSearchParams(location.search).has("mini-debug"));
-    let loaded = document.readyState === "complete",
+    let loaded = false,
+      idle: number | undefined,
+      fallback: ReturnType<typeof setTimeout> | undefined,
       timer: ReturnType<typeof setTimeout> | undefined;
     const start = () => {
       if (!entrance || timer || !loaded || document.hidden) return;
       timer = setTimeout(summon, 600);
     };
-    const load = () => {
+    const show = () => {
       loaded = true;
+      setReady(true);
       start();
     };
+    const load = () => {
+      if (loaded || idle !== undefined || fallback !== undefined) return;
+      if (typeof window.requestIdleCallback === "function") {
+        idle = window.requestIdleCallback(show, { timeout: 1500 });
+      } else {
+        fallback = setTimeout(show, 500);
+      }
+    };
+    if (document.readyState === "complete") load();
     const slow = setTimeout(load, 2500); // don't wait on a slow asset forever
     const visibility = () => {
       setVisible(!document.hidden);
@@ -393,6 +405,8 @@ export function MiniDotan() {
     return () => {
       clearTimeout(timer);
       clearTimeout(slow);
+      clearTimeout(fallback);
+      if (idle !== undefined) window.cancelIdleCallback(idle);
       window.removeEventListener("load", load);
       document.removeEventListener("visibilitychange", visibility);
     };
