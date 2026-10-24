@@ -13,6 +13,24 @@ const contentSecurityPolicy = [
   "object-src 'none'",
 ].join("; ");
 
+// Only features nothing on the site (or GTM / ProveSource) uses. Fullscreen,
+// gamepad, XR and autoplay are deliberately left at browser defaults.
+const permissionsPolicy = [
+  "camera=()",
+  "microphone=()",
+  "geolocation=()",
+  "payment=()",
+  "usb=()",
+  "serial=()",
+  "hid=()",
+  "bluetooth=()",
+  "midi=()",
+  "display-capture=()",
+  "magnetometer=()",
+  "gyroscope=()",
+  "accelerometer=()",
+].join(", ");
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Always inlined, so the Explore test hook compiles out of normal builds
@@ -39,6 +57,9 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: permissionsPolicy },
+          // Not "same-origin": keeps opener links / OAuth-style popups working.
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
         ],
       },
     ];
