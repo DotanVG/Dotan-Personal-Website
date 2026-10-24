@@ -1,9 +1,11 @@
 "use client";
 
 import Script from "next/script";
+import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { site } from "@/content/site";
+import { initAnalytics } from "@/lib/analytics";
 
 function redactUrl<T extends { url: string }>(event: T): T {
   const url = new URL(event.url);
@@ -12,22 +14,15 @@ function redactUrl<T extends { url: string }>(event: T): T {
 
 export function AnalyticsProvider() {
   const gaId = site.services.gaId;
+  useEffect(initAnalytics, []);
   return (
     <>
       <Analytics beforeSend={redactUrl} />
       <SpeedInsights beforeSend={redactUrl} />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
-      <Script id="ga-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${gaId}');
-        `}
-      </Script>
       <Script id="provesrc" strategy="afterInteractive">
         {`
           if (!window.provesrc) {
