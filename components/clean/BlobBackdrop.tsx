@@ -6,9 +6,15 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 
+const WAKE_EVENTS = ["pointermove", "pointerdown", "wheel", "scroll", "keydown"] as const;
+// Decorative only: three.js, the HDR and the transmission shader stay off the
+// load/hydration path until the visitor interacts (or this fallback elapses).
+const WAKE_FALLBACK_MS = 5000;
+
 export function BlobBackdrop() {
   const reduced = useReducedMotion();
   const [desktop, setDesktop] = useState(false);
+  const [awake, setAwake] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
@@ -18,7 +24,18 @@ export function BlobBackdrop() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  if (reduced || !desktop) return null;
+  useEffect(() => {
+    if (reduced || !desktop || awake) return;
+    const wake = () => setAwake(true);
+    const timer = window.setTimeout(wake, WAKE_FALLBACK_MS);
+    WAKE_EVENTS.forEach((e) => window.addEventListener(e, wake, { passive: true }));
+    return () => {
+      window.clearTimeout(timer);
+      WAKE_EVENTS.forEach((e) => window.removeEventListener(e, wake));
+    };
+  }, [reduced, desktop, awake]);
+
+  if (reduced || !desktop || !awake) return null;
 
   return (
     <div
