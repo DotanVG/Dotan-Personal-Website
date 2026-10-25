@@ -38,7 +38,7 @@ export type MissionEvent =
   | { type: "skip" }
   | { type: "replay" };
 
-export type ApplyResult = { state: MissionState; completed?: MissionId };
+export type ApplyResult = { state: MissionState; completed?: MissionId; completedAll: MissionId[] };
 
 export type MissionDef = { id: MissionId; title: string; short: string };
 
@@ -137,11 +137,6 @@ export function loadMissions(raw: string | null, projectCount = liveProjectCount
   };
 }
 
-function added(prev: readonly string[], next: readonly string[]): MissionId | undefined {
-  for (const id of next) if (!prev.includes(id)) return id as MissionId;
-  return undefined;
-}
-
 function reduce(state: MissionState, event: MissionEvent, projectCount: number): MissionState {
   switch (event.type) {
     case "hide":
@@ -174,10 +169,37 @@ function reduce(state: MissionState, event: MissionEvent, projectCount: number):
   }
 }
 
+function missionMet(state: MissionState, id: MissionId, projectCount: number): boolean {
+  if (id === "read-city") return landmarkCount(state.visited) >= READ_GOAL;
+  // A lighthouse read from an earlier mission counts. Do not send the player back.
+  if (id === "coast-run") return state.visited.includes("naval");
+  if (id === "arcade") return state.visited.includes("arcade");
+  return keyCount(state.visited, projectCount) >= missionGoal("key", projectCount);
+}
+
+/** Mark every mission whose work is already done. Stops at the first one that still needs a new visit. */
+export function reconcile(state: MissionState, projectCount = liveProjectCount()): { state: MissionState; completed: MissionId[] } {
+  const completed: MissionId[] = [];
+  let next = state;
+  for (const id of activeMissionIds(projectCount)) {
+    if (next.done.includes(id)) continue;
+    if (!missionMet(next, id, projectCount)) break;
+    completed.push(id);
+    next = { ...next, done: [...next.done, id] };
+  }
+  return { state: completed.length ? next : state, completed };
+}
+
 export function applyEvent(state: MissionState, event: MissionEvent, projectCount = liveProjectCount()): ApplyResult {
-  const next = reduce(state, event, projectCount);
-  if (next === state) return { state };
-  return { state: next, completed: added(state.done, next.done) };
+  const reduced = reduce(state, event, projectCount);
+  const settled = reconcile(reduced, projectCount);
+  const next = settled.state;
+  if (next === state) return { state, completedAll: [] };
+  const completedAll: MissionId[] = [];
+  for (const id of activeMissionIds(projectCount)) {
+    if (next.done.includes(id) && !state.done.includes(id)) completedAll.push(id);
+  }
+  return { state: next, completed: completedAll[0], completedAll };
 }
 
 function padOf(city: City, slug: string, name?: string): MissionTarget | null {
@@ -236,6 +258,7 @@ export function currentTarget(
   if (id === "read-city") return nearestUnread(state, city, player, false);
   if (id === "key") return nearestUnread(state, city, player, true);
   if (id === "coast-run") {
+    if (state.visited.includes("naval")) return null;
     if (!state.drove && !player.driving) {
       const car = nearestCar(cars, player);
       if (car) return { x: car.x, z: car.z, name: "the nearest car", slug: "car" };
@@ -256,7 +279,7 @@ export function pillarTarget(
 ): MissionTarget | null {
   if (state.hidden) return null;
   const id = currentMissionId(state, projectCount);
-  if (id === "coast-run") return padOf(city, "naval");
+  if (id === "coast-run") return state.visited.includes("naval") ? null : padOf(city, "naval");
   return currentTarget(state, city, player, cars, projectCount);
 }
 
@@ -302,6 +325,44 @@ export function chipModel(
     compact: `${def.short} · ${n}/${goal}`,
     live: `Key to the City, ${n} of ${goal}.${name ? ` Next is ${name}.` : ""}`,
   };
+}
+
+export type MissionBrief = { title: string; what: string; progress: string };
+
+/** Copy for the mission panel. One or two sentences, plus a progress fraction. */
+export function missionBrief(state: MissionState, opts: { projectCount: number; driving: boolean }): MissionBrief | null {
+  if (state.hidden) return null;
+  const id = currentMissionId(state, opts.projectCount);
+  if (id === "read-city") {
+    const n = Math.min(READ_GOAL, landmarkCount(state.visited));
+    return {
+      title: "Read the City",
+      what: "Open any 3 landmarks. The marker leads to the nearest one you have not read.",
+      progress: `${n}/${READ_GOAL}`,
+    };
+  }
+  if (id === "coast-run") {
+    const step = coastStep(state, opts.driving);
+    const what = state.drove
+      ? "Step out and read the Naval Officers School. One visit is enough."
+      : opts.driving
+        ? "Drive to the pier. The marker stays on the Naval Officers School."
+        : "Take any car, then follow the marker down to the Naval Officers School.";
+    return { title: "Coast Run", what, progress: `${step.n}/3` };
+  }
+  if (id === "arcade") {
+    return { title: "The Arcade", what: "Open the Arcade. If you already did, this mission finishes on its own.", progress: "0/1" };
+  }
+  if (id === "key") {
+    const goal = missionGoal("key", opts.projectCount);
+    const n = Math.min(goal, keyCount(state.visited, opts.projectCount));
+    return {
+      title: "Key to the City",
+      what: "Open every stop you have not read yet. Places you already visited stay checked.",
+      progress: `${n}/${goal}`,
+    };
+  }
+  return null;
 }
 
 export function menuLine(state: MissionState, projectCount: number, driving: boolean): string {

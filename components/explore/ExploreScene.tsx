@@ -4,7 +4,6 @@ import { Component, useCallback, useEffect, useMemo, useRef, useState, type Reac
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { applyKey, clearInput, createInput, type InputState } from "@/lib/game/input";
-import { wrapAngle } from "@/lib/game/math";
 import {
   applyEvent,
   ARRIVE_M,
@@ -13,6 +12,7 @@ import {
   loadMissions,
   MISSIONS_KEY,
   PILLAR_HIDE_M,
+  reconcile,
   pillarTarget,
   rewardCopy,
   welcomeToast,
@@ -31,7 +31,7 @@ import { FRAME_ORDER, GameContext, createFrameBus, useGame, type FrameCtx, type 
 import { Hud, type HudRefs } from "./Hud";
 import { InfoPanel } from "./InfoPanel";
 import { LoadingScreen } from "./LoadingScreen";
-import { RewardDialog } from "./Missions";
+import { RewardDialog, updateGuideMarker } from "./Missions";
 import { TouchControls } from "./TouchControls";
 import { COACH_KEY, initialTouchMode, missionRefs, readStorage, SOUND_KEY, touchVisible, useExploreUi, writeStorage } from "./uiStore";
 import { Vehicles } from "./Vehicles";
@@ -203,7 +203,7 @@ function ExploreGame() {
   const status = useExploreUi((s) => s.status);
   const coach = useExploreUi((s) => s.coach);
   const reward = useExploreUi((s) => s.reward);
-  const pendingReward = useExploreUi((s) => s.pendingReward);
+  const rewardQueue = useExploreUi((s) => s.rewardQueue);
   const showTouch = touchVisible({ touchMode, sawTouch, coarse });
 
   // The simulation waits while loading or a card is up; rendering keeps going so rewards can play.
@@ -224,21 +224,30 @@ function ExploreGame() {
   useEffect(() => {
     const coarseMq = window.matchMedia("(pointer: coarse)");
     const saved = loadMissions(readStorage(MISSIONS_KEY));
-    const welcome = welcomeToast(saved, liveProjectCount());
+    const settled = reconcile(saved, liveProjectCount());
+    if (settled.completed.length) writeStorage(MISSIONS_KEY, JSON.stringify(settled.state));
+    const copies = settled.completed.map((id) => rewardCopy(id, liveProjectCount()));
+    const welcome = copies.length ? null : welcomeToast(settled.state, liveProjectCount());
+    const toastId = Date.now();
     useExploreUi.setState({
       overlay: "none",
       status: "loading",
       touchMode: initialTouchMode(),
       coarse: coarseMq.matches,
       coach: readStorage(COACH_KEY) !== "1",
-      toast: welcome ? { text: welcome, id: Date.now() } : null,
-      missions: saved,
-      revealed: [...saved.done],
+      toast: copies.length ? { text: copies[copies.length - 1]!.toast, id: toastId } : welcome ? { text: welcome, id: toastId } : null,
+      missions: settled.state,
+      revealed: [...settled.state.done],
       sound: readStorage(SOUND_KEY) !== "0",
-      reward: null,
-      pendingReward: null,
+      reward: copies[0] ?? null,
+      rewardQueue: copies,
+      brief: false,
       aim: null,
     });
+    if (copies.length && readStorage(SOUND_KEY) !== "0") {
+      playChime({ vibrate: window.matchMedia("(pointer: coarse)").matches });
+      celebrateMission();
+    }
     const onCoarse = () => useExploreUi.setState({ coarse: coarseMq.matches });
     coarseMq.addEventListener("change", onCoarse);
     const onPointer = (e: PointerEvent) => {
@@ -258,7 +267,7 @@ function ExploreGame() {
       window.removeEventListener("pointerdown", onPointer, { capture: true });
       clearInput(input);
       closeChime();
-      useExploreUi.setState({ overlay: "none", status: "loading", toast: null, reward: null, pendingReward: null });
+      useExploreUi.setState({ overlay: "none", status: "loading", toast: null, reward: null, rewardQueue: [], brief: false });
     };
   }, [input]);
 
@@ -273,9 +282,15 @@ function ExploreGame() {
       primeChime();
       const ui = useExploreUi.getState();
       if (e.key === "Escape") {
+        const fromBrief = e.target instanceof Element && !!e.target.closest("[data-testid='mission-brief']");
+        if (ui.brief || fromBrief) {
+          e.preventDefault();
+          ui.setBrief(false);
+          return;
+        }
         if (ui.reward) {
           e.preventDefault();
-          ui.setReward(null);
+          ui.dismissReward();
           return;
         }
         if (ui.overlay === "none") {
@@ -324,12 +339,11 @@ function ExploreGame() {
     if (overlay !== "none" || reward) clearInput(input);
   }, [overlay, reward, input]);
 
-  // The landmark story closes first. The achievement card follows it.
+  // The landmark story closes first. Queued achievement cards follow it, one at a time.
   useEffect(() => {
-    if (overlay !== "none" || reward || !pendingReward) return;
-    useExploreUi.getState().setReward(pendingReward);
-    useExploreUi.getState().setPendingReward(null);
-  }, [overlay, reward, pendingReward]);
+    if (overlay !== "none" || reward || !rewardQueue.length) return;
+    useExploreUi.getState().setReward(rewardQueue[0]!);
+  }, [overlay, reward, rewardQueue]);
 
   // HUD sync: discrete fields through the store (only on change), numbers straight to the DOM.
   useEffect(() => {
@@ -339,27 +353,31 @@ function ExploreGame() {
     let speedEl: HTMLElement | null = null;
     const seen = new Set<string>(useExploreUi.getState().revealed);
     let epoch = useExploreUi.getState().epoch;
-    const celebrate = (id?: MissionId) => {
+    const celebrate = (ids: readonly MissionId[]) => {
       const cur = useExploreUi.getState();
       if (epoch !== cur.epoch) {
         epoch = cur.epoch;
         seen.clear();
         for (const done of cur.revealed) seen.add(done);
       }
-      if (!id || seen.has(id)) return;
-      seen.add(id);
-      cur.noteRevealed(id);
-      const copy = rewardCopy(id, liveProjectCount());
-      cur.setPendingReward(copy);
+      const fresh = ids.filter((id) => !seen.has(id));
+      if (!fresh.length) return;
+      for (const id of fresh) {
+        seen.add(id);
+        cur.noteRevealed(id);
+      }
+      const copies = fresh.map((id) => rewardCopy(id, liveProjectCount()));
+      cur.queueRewards(copies);
+      cur.setBrief(false);
       const toastId = Date.now();
-      cur.setToast({ text: copy.toast, id: toastId });
+      cur.setToast({ text: copies[copies.length - 1]!.toast, id: toastId });
       window.setTimeout(() => {
         if (useExploreUi.getState().toast?.id === toastId) useExploreUi.getState().setToast(null);
       }, 12000);
       if (cur.sound) playChime({ vibrate: window.matchMedia("(pointer: coarse)").matches });
       celebrateMission();
     };
-    return bus.add(FRAME_ORDER.hud, ({ g, events }) => {
+    return bus.add(FRAME_ORDER.hud, ({ g, events, camera }) => {
       const ui = useExploreUi.getState();
       if (ui.status === "loading" && ++firstFrames.current > 2) ui.setStatus("ready");
       const h = g.hud;
@@ -418,7 +436,7 @@ function ExploreGame() {
           trackEvent("marker_open", { slug: e.slug });
           const read = applyEvent(useExploreUi.getState().missions, { type: "inspect", slug: e.slug });
           if (read.state !== useExploreUi.getState().missions) useExploreUi.getState().setMissions(read.state);
-          celebrate(read.completed);
+          celebrate(read.completedAll);
         } else if (e.type === "enter" && ui.coach) {
           ui.setCoach(false);
           writeStorage(COACH_KEY, "1");
@@ -428,14 +446,7 @@ function ExploreGame() {
       const count = liveProjectCount();
       const player = { x: g.player.x, z: g.player.z, driving: g.player.state === "driving" };
       const target = currentTarget(guide.missions, g.city, player, g.cars, count);
-      const arrow = missionRefs.arrow;
-      if (arrow) {
-        if (!target) arrow.style.opacity = "0";
-        else {
-          arrow.style.opacity = "1";
-          arrow.style.transform = `rotate(${wrapAngle(Math.atan2(target.x - player.x, target.z - player.z) - cam.yaw)}rad)`;
-        }
-      }
+      updateGuideMarker(camera, target, player);
       const pillar = pillarTarget(guide.missions, g.city, player, g.cars, count);
       if (!pillar) missionRefs.pillar = null;
       else {
@@ -443,9 +454,9 @@ function ExploreGame() {
         const prev = missionRefs.pillar;
         if (!prev || prev.x !== pillar.x || prev.z !== pillar.z || prev.near !== near) missionRefs.pillar = { x: pillar.x, z: pillar.z, near };
       }
-      guide.setAim(target && target.slug !== "car" ? { slug: target.slug, name: target.name } : null);
+      guide.setAim(target ? { slug: target.slug, name: target.name } : null);
     });
-  }, [bus, cam]);
+  }, [bus]);
 
   // Quality governor: only live, unpaused frames count.
   const governor = useMemo(() => createQualityGovernor(quality), []); // eslint-disable-line react-hooks/exhaustive-deps

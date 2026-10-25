@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { CURB_HEIGHT, MONUMENT_SPOT, type City } from "@/lib/game/city";
+import { createCity, CURB_HEIGHT, MONUMENT_SPOT, type City } from "@/lib/game/city";
 import { damp } from "@/lib/game/math";
-import { chipModel, liveProjectCount, type RewardCopy } from "@/lib/game/missions";
-import { Modal } from "./Dialogs";
+import { checklist, chipModel, liveProjectCount, missionBrief, type MissionTarget, type RewardCopy } from "@/lib/game/missions";
+import { HelpContent, Modal } from "./Dialogs";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
 import { bannerGeometry, beamModel, pillarModel, statueModel } from "./monument";
 import { missionRefs, useExploreUi } from "./uiStore";
@@ -24,7 +24,7 @@ function useNarrowChip() {
   return narrow;
 }
 
-/** Quest chip. The arrow is rotated from the frame loop, so this does not re-render every frame. */
+/** Quest chip. Opens the mission panel. Guidance itself is the screen marker, not this button. */
 export function MissionChip({ driving }: { driving: boolean }) {
   const missions = useExploreUi((s) => s.missions);
   const aim = useExploreUi((s) => s.aim);
@@ -32,35 +32,203 @@ export function MissionChip({ driving }: { driving: boolean }) {
   const model = chipModel(missions, { projectCount: liveProjectCount(), driving, targetName: aim?.name ?? null });
   if (!model) return null;
   return (
-    <div
+    <button
+      type="button"
       data-testid="mission-chip"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
       aria-label={model.live}
-      className="pointer-events-none flex min-h-11 max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-white/25 bg-[#1d222b]/75 py-1 pl-3.5 pr-1.5 text-sm font-medium text-white shadow-md backdrop-blur-sm [@media(max-height:500px)]:max-w-[min(13rem,calc(100vw-18rem))]"
+      onClick={() => useExploreUi.getState().setBrief(true)}
+      className="pointer-events-auto flex min-h-11 max-w-[min(22rem,calc(100vw-1.5rem))] items-center rounded-full border border-white/25 bg-[#1d222b]/75 px-3.5 text-sm font-medium text-white shadow-md backdrop-blur-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#facc15] [@media(max-height:500px)]:max-w-[min(13rem,calc(100vw-18rem))]"
     >
-      <span aria-hidden className="truncate">
-        {narrow ? model.compact : model.long}
+      <span className="truncate">{narrow ? model.compact : model.long}</span>
+    </button>
+  );
+}
+
+const _v = new THREE.Vector3();
+
+/** Screen marker. Called from the HUD frame. Positions a DOM node; no React state. */
+export function updateGuideMarker(camera: THREE.PerspectiveCamera, target: MissionTarget | null, player: { x: number; z: number }) {
+  const el = missionRefs.marker;
+  if (!el) return;
+  const label = missionRefs.markerLabel;
+  const arrow = missionRefs.markerArrow;
+  const distEl = missionRefs.panelDist;
+  if (!target) {
+    el.style.display = "none";
+    return;
+  }
+  const host = el.offsetParent instanceof HTMLElement ? el.offsetParent : el.parentElement;
+  const w = host?.clientWidth || window.innerWidth;
+  const h = host?.clientHeight || window.innerHeight;
+  const dist = Math.max(0, Math.round(Math.hypot(target.x - player.x, target.z - player.z)));
+  const meters = `${dist} m`;
+  if (label && label.textContent !== `${target.name} · ${meters}`) label.textContent = `${target.name} · ${meters}`;
+  if (distEl && distEl.textContent !== meters) distEl.textContent = meters;
+
+  camera.updateWorldMatrix(true, false);
+  _v.set(target.x, CURB_HEIGHT + (target.slug === "car" ? 1.8 : 3.4), target.z);
+  _v.applyMatrix4(camera.matrixWorldInverse);
+  const behind = _v.z > 0;
+  _v.applyMatrix4(camera.projectionMatrix);
+  let sx = (_v.x * 0.5 + 0.5) * w;
+  let sy = (-_v.y * 0.5 + 0.5) * h;
+  if (behind) {
+    sx = w - sx;
+    sy = h - sy;
+  }
+  const top = 76;
+  const bottom = Math.min(140, h * 0.22);
+  const side = 12;
+  const onScreen = !behind && sx >= side && sx <= w - side && sy >= top && sy <= h - bottom;
+  el.style.display = "flex";
+  if (onScreen) {
+    el.style.left = `${sx}px`;
+    el.style.top = `${sy}px`;
+    el.style.transform = "translate(-50%, -120%)";
+    if (arrow) arrow.style.opacity = "0";
+    return;
+  }
+  const cx = w / 2;
+  const cy = h / 2;
+  let dx = sx - cx;
+  let dy = sy - cy;
+  if (Math.hypot(dx, dy) < 8) {
+    dx = 0;
+    dy = -1;
+  }
+  const maxX = w / 2 - side;
+  const maxYTop = cy - top;
+  const maxYBottom = h - bottom - cy;
+  const ang = Math.atan2(dy, dx);
+  const cos = Math.cos(ang);
+  const sin = Math.sin(ang);
+  const limY = sin < 0 ? maxYTop : maxYBottom;
+  const scale = Math.min(maxX / Math.max(0.001, Math.abs(cos)), limY / Math.max(0.001, Math.abs(sin)));
+  el.style.left = `${cx + cos * scale}px`;
+  el.style.top = `${cy + sin * scale}px`;
+  el.style.transform = "translate(-50%, -50%)";
+  if (arrow) {
+    arrow.style.opacity = "1";
+    arrow.style.transform = `rotate(${ang + Math.PI / 2}rad)`;
+  }
+}
+
+export function GuideMarker() {
+  return (
+    <div
+      ref={(el) => {
+        missionRefs.marker = el;
+      }}
+      data-testid="mission-marker"
+      aria-hidden
+      className="pointer-events-none absolute left-0 top-0 z-10 hidden max-w-[11rem] items-center gap-1.5 rounded-full border border-[#f2cf7e]/70 bg-[#1d222b]/85 py-1 pl-1.5 pr-2.5 text-xs font-semibold text-white shadow-md"
+    >
+      <span
+        ref={(el) => {
+          missionRefs.markerArrow = el;
+        }}
+        className="grid size-6 shrink-0 place-items-center"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1.2 L12 12 H2 Z" fill="#f2cf7e" />
+        </svg>
       </span>
       <span
         ref={(el) => {
-          missionRefs.arrow = el;
+          missionRefs.markerLabel = el;
         }}
-        aria-hidden
-        className="grid size-9 shrink-0 place-items-center"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M9 2.5 L14.5 14.5 H3.5 Z" fill="#f2cf7e" />
-        </svg>
-      </span>
+        className="truncate"
+      />
     </div>
+  );
+}
+
+export function MissionBrief({ driving }: { driving: boolean }) {
+  const open = useExploreUi((s) => s.brief);
+  const missions = useExploreUi((s) => s.missions);
+  const aim = useExploreUi((s) => s.aim);
+  const ref = useRef<HTMLDialogElement>(null);
+  const [help, setHelp] = useState(false);
+  const landmarks = useMemo(() => createCity(7).landmarks, []);
+  const brief = missionBrief(missions, { projectCount: liveProjectCount(), driving });
+  const items = checklist(missions, landmarks, liveProjectCount());
+  const show = open && !!brief;
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (show && !d.open) {
+      d.show();
+      d.focus();
+    }
+    if (!show && d.open) d.close();
+  }, [show]);
+  if (!brief) return null;
+  const close = () => useExploreUi.getState().setBrief(false);
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby="mission-brief-title"
+      aria-modal="false"
+      data-testid="mission-brief"
+      tabIndex={-1}
+      onClose={close}
+      onCancel={(e) => {
+        e.preventDefault();
+        close();
+      }}
+      className="pointer-events-auto fixed left-1/2 top-[calc(max(10px,env(safe-area-inset-top))+104px)] z-40 m-0 w-[min(22rem,calc(100vw-1.5rem))] max-h-[min(70dvh,26rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-[#1d222b]/15 bg-[#f7f0e2] p-0 text-[#1d222b] shadow-2xl"
+    >
+      <div className="p-3.5">
+        <h2 id="mission-brief-title" className="font-display text-lg font-semibold">
+          {brief.title}
+        </h2>
+        <p className="mt-1 text-sm leading-snug text-[#1d222b]/85">{brief.what}</p>
+        <p className="mt-2 text-sm font-medium">
+          {aim?.name ?? "Next stop"} ·{" "}
+          <span
+            ref={(el) => {
+              missionRefs.panelDist = el;
+            }}
+          >
+            —
+          </span>
+        </p>
+        <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-[#b3402c]">Progress {brief.progress}</p>
+        <ul className="mt-1 grid grid-cols-2 gap-x-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex min-h-7 items-center gap-1.5 text-xs">
+              <span aria-hidden className={item.checked ? "text-[#2f7d4a]" : "text-[#1d222b]/35"}>
+                {item.checked ? "✓" : "○"}
+              </span>
+              <span className={item.checked ? "" : "text-[#1d222b]/70"}>{item.label}</span>
+              <span className="sr-only">{item.checked ? ", read" : ", not read"}</span>
+            </li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          className="mt-2 min-h-11 text-sm font-semibold underline underline-offset-4"
+          aria-expanded={help}
+          onClick={() => setHelp((v) => !v)}
+        >
+          {help ? "Hide controls" : "Controls"}
+        </button>
+        {help && <HelpContent />}
+        <button
+          type="button"
+          onClick={close}
+          className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#1d222b] px-4 text-[15px] font-semibold text-white"
+        >
+          Close
+        </button>
+      </div>
+    </dialog>
   );
 }
 
 export function RewardDialog({ onContact }: { onContact: () => void }) {
   const reward = useExploreUi((s) => s.reward);
-  const close = () => useExploreUi.getState().setReward(null);
+  const close = () => useExploreUi.getState().dismissReward();
   return (
     <Modal open={reward !== null} onClose={close} labelledBy="reward-title">
       {reward && <RewardBody reward={reward} onClose={close} onContact={onContact} />}
@@ -193,7 +361,7 @@ function Pillar() {
     }
     mesh.visible = true;
     mesh.position.set(aim.x, CURB_HEIGHT, aim.z);
-    mat.opacity = reduced ? 0.4 : 0.26 + Math.sin(performance.now() / 280) * 0.1;
+    mat.opacity = reduced ? 0.55 : 0.42 + Math.sin(performance.now() / 280) * 0.12;
   }, FRAME_ORDER.hud + 1);
   return <mesh ref={ref} geometry={geo} material={mat} frustumCulled={false} />;
 }

@@ -31,10 +31,24 @@ test("Read the City, then a driven lighthouse read, with the clean view left cle
   const { browser, page, logs } = await launch({ width: 1280, height: 800 });
   try {
     await openExplore(page);
+    await page.getByText("Read any 3 landmarks.").waitFor();
+    assert.equal(await page.getByText("Grab a car and go.").count(), 0);
     await dismissCoach(page);
     const chip = page.getByTestId("mission-chip");
     await chip.waitFor();
     assert.match(await chip.getAttribute("aria-label"), /Read the City, 0 of 3/);
+    const marker = page.getByTestId("mission-marker");
+    await page.waitForFunction(() => /\d+ m/.test(document.querySelector("[data-testid='mission-marker']")?.textContent ?? ""));
+    assert.match(await marker.innerText(), /\d+ m/);
+    await chip.click();
+    const panel = page.getByTestId("mission-brief");
+    await panel.waitFor();
+    assert.match(await panel.innerText(), /Read the City/);
+    assert.match(await panel.innerText(), /Open any 3 landmarks/);
+    await page.getByRole("button", { name: "Controls" }).click();
+    await page.getByText("Grab a car and go.").waitFor();
+    await page.getByRole("button", { name: "Close" }).click();
+    await panel.waitFor({ state: "hidden" });
     const laid = await boxes(page);
     assert.ok(laid.clean?.shown, "clean view is on screen");
     assert.equal(overlaps(laid.clean, laid.chip), false);
@@ -127,6 +141,62 @@ test("Coast Run ends without mentioning an arcade, and replay starts over", { ti
     await page.getByRole("button", { name: "Back" }).click();
     await page.getByRole("button", { name: "Resume" }).click();
     assert.match(await page.getByTestId("mission-chip").getAttribute("aria-label"), /Read the City, 0 of 3/);
+  } finally {
+    assert.deepEqual(realErrors(logs), []);
+    await browser.close();
+  }
+});
+
+test("a lighthouse read during Read the City finishes Coast Run instead of sending him back", { timeout: 120000 }, async () => {
+  const { browser, page, logs } = await launch({
+    width: 1280,
+    height: 800,
+    init: () =>
+      localStorage.setItem(
+        "dotanv-explore-missions-v1",
+        JSON.stringify({ v: 1, visited: ["ness", "kanomi", "naval"], drove: false, done: [], hidden: false }),
+      ),
+  });
+  try {
+    await openExplore(page);
+    let sawLit = false;
+    for (let i = 0; i < 3; i++) {
+      const reward = page.getByTestId("mission-reward");
+      await reward.waitFor({ timeout: 8000 }).catch(() => {});
+      if (!(await reward.count())) break;
+      if (/lighthouse is lit/i.test(await reward.innerText())) sawLit = true;
+      await page.getByRole("button", { name: "Keep exploring" }).click();
+    }
+    assert.equal(sawLit, true);
+    const done = await page.evaluate(() => window.__explore.missions());
+    assert.ok(done.done.includes("read-city"));
+    assert.ok(done.done.includes("coast-run"));
+    assert.equal(await page.getByTestId("mission-chip").count(), 0);
+  } finally {
+    assert.deepEqual(realErrors(logs), []);
+    await browser.close();
+  }
+});
+
+test("the mission panel fits a phone and stays closed until asked", { timeout: 120000 }, async () => {
+  const { browser, page, logs } = await launch({ width: 375, height: 700, mobile: true });
+  try {
+    await openExplore(page);
+    await page.getByRole("button", { name: "Got it" }).tap();
+    await page.getByText("Read any 3 landmarks.").waitFor({ state: "hidden" });
+    await page.getByTestId("mission-chip").tap();
+    const panel = page.getByTestId("mission-brief");
+    await panel.waitFor();
+    const box = await panel.boundingBox();
+    assert.ok(box);
+    assert.ok(box.width <= 360, `panel width ${box.width}`);
+    assert.ok(box.height < 560, `panel height ${box.height}`);
+    assert.equal(await page.getByText("Grab a car and go.").count(), 0);
+    const clean = await page.getByTestId("clean-view").boundingBox();
+    assert.ok(clean);
+    assert.ok(clean.y + clean.height <= box.y + 4 || clean.x + clean.width <= box.x || box.x + box.width <= clean.x);
+    await page.getByRole("button", { name: "Close" }).tap();
+    await panel.waitFor({ state: "hidden" });
   } finally {
     assert.deepEqual(realErrors(logs), []);
     await browser.close();

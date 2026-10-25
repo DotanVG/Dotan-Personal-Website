@@ -12,6 +12,7 @@ import {
   currentTarget,
   loadMissions,
   missionGoal,
+  reconcile,
   rewardCopy,
   type MissionState,
 } from "@/lib/game/missions";
@@ -81,20 +82,65 @@ test("the hint points at the nearest unread landmark, and never leads with Zota"
   assert.equal(onlyZota?.slug, "zota");
 });
 
-test("Coast Run needs a driven arrival and then the lighthouse, in that order", () => {
+test("Coast Run still needs the lighthouse when it has not been read", () => {
   let state: MissionState = { ...DEFAULT_MISSIONS, visited: ["ness", "kanomi", "electra"], done: ["read-city"] };
-  let res = read(state, "naval");
-  state = res.state;
-  assert.equal(res.completed, undefined);
-  assert.equal(state.drove, false);
-  res = applyEvent(state, { type: "arrive", slug: "naval" });
-  state = res.state;
-  assert.equal(state.drove, true);
-  assert.equal(res.completed, undefined);
-  res = read(state, "naval");
-  assert.equal(res.completed, "coast-run");
+  const arrived = applyEvent(state, { type: "arrive", slug: "naval" });
+  assert.equal(arrived.completed, undefined);
+  assert.equal(arrived.state.drove, true);
+  const done = read(arrived.state, "naval");
+  assert.deepEqual(done.completedAll, ["coast-run"]);
   const early = applyEvent(DEFAULT_MISSIONS, { type: "arrive", slug: "naval" });
   assert.equal(read(early.state, "naval").completed, undefined);
+  const guide = currentTarget(state, city, { ...at("ness"), driving: false }, [{ x: 2, z: 3 }]);
+  assert.equal(guide?.slug, "car");
+  const pier = currentTarget({ ...state, drove: true }, city, { ...at("ness"), driving: true }, []);
+  assert.equal(pier?.slug, "naval");
+});
+
+test("a landmark read before its mission starts finishes that mission, and the guide never repeats it", () => {
+  const ahead = reconcile({ ...DEFAULT_MISSIONS, visited: ["ness", "kanomi", "naval"] }, 0);
+  assert.deepEqual(ahead.completed, ["read-city", "coast-run"]);
+  assert.equal(currentTarget(ahead.state, city, at("naval"), [{ x: 1, z: 1 }], 0), null);
+
+  let state = DEFAULT_MISSIONS;
+  state = read(state, "ness").state;
+  state = read(state, "naval").state;
+  const both = read(state, "kanomi");
+  assert.deepEqual(both.completedAll, ["read-city", "coast-run"]);
+  assert.equal(currentTarget(both.state, city, at("zota"), [], 0), null);
+
+  const partial = { ...DEFAULT_MISSIONS, visited: ["ness", "naval"] };
+  const next = currentTarget(partial, city, at("naval"), [{ x: 8, z: 8 }], 0);
+  assert.ok(next);
+  assert.equal(partial.visited.includes(next.slug), false);
+
+  const loaded = reconcile(loadMissions(JSON.stringify({ v: 1, visited: ["ness", "kanomi", "naval"], drove: false, done: ["read-city"], hidden: false })), 0);
+  assert.deepEqual(loaded.completed, ["coast-run"]);
+  assert.equal(currentTarget(loaded.state, city, at("ness"), [], 0)?.slug, undefined);
+});
+
+test("later missions also accept work done early, and point at somewhere still unread", () => {
+  const previsited = {
+    v: 1 as const,
+    visited: [...slugs, "arcade"],
+    drove: true,
+    done: ["read-city", "coast-run"],
+    hidden: false,
+  };
+  const finished = reconcile(previsited, 1);
+  assert.deepEqual(finished.completed, ["arcade", "key"]);
+  assert.equal(currentMissionId(finished.state, 1), null);
+  assert.equal(reconcile(finished.state, 1).completed.length, 0);
+
+  const almost = {
+    ...previsited,
+    visited: slugs.filter((s) => s !== "ort"),
+    done: ["read-city", "coast-run", "arcade"],
+  };
+  const aim = currentTarget(almost, city, at("ness"), [], 1);
+  assert.ok(aim);
+  assert.equal(almost.visited.includes(aim.slug), false);
+  assert.equal(aim.slug, "ort");
 });
 
 test("missions 3 and 4 stay gated while the games list is empty", () => {
@@ -109,8 +155,11 @@ test("missions 3 and 4 stay gated while the games list is empty", () => {
   assert.equal(applyEvent(finished, { type: "inspect", slug: "arcade" }, 0).completed, undefined);
   assert.equal(currentMissionId(finished, 1), "arcade");
   const opened = applyEvent(finished, { type: "inspect", slug: "arcade" }, 1);
-  assert.equal(opened.completed, "arcade");
-  assert.equal(currentMissionId(opened.state, 1), "key");
+  assert.deepEqual(opened.completedAll, ["arcade", "key"]);
+  const notYet = { ...finished, visited: slugs.filter((s) => s !== "ort") };
+  const onlyArcade = applyEvent(notYet, { type: "inspect", slug: "arcade" }, 1);
+  assert.deepEqual(onlyArcade.completedAll, ["arcade"]);
+  assert.equal(currentMissionId(onlyArcade.state, 1), "key");
 });
 
 test("hiding a mission does not stop it counting, and replay clears the chain", () => {

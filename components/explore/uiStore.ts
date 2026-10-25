@@ -10,9 +10,12 @@ export type TouchMode = "auto" | "on" | "off";
 export type Status = "loading" | "ready" | "lost";
 export type Aim = { slug: string; name: string } | null;
 
-/** Written from the HUD frame, read by the chip arrow and the light pillar. */
+/** Written from the HUD frame. The marker and distance read these nodes; nothing here causes a render. */
 export const missionRefs = {
-  arrow: null as HTMLElement | null,
+  marker: null as HTMLElement | null,
+  markerArrow: null as HTMLElement | null,
+  markerLabel: null as HTMLElement | null,
+  panelDist: null as HTMLElement | null,
   pillar: null as { x: number; z: number; near: boolean } | null,
 };
 
@@ -35,7 +38,8 @@ type ExploreUi = {
   aim: Aim;
   sound: boolean;
   reward: RewardCopy | null;
-  pendingReward: RewardCopy | null;
+  rewardQueue: RewardCopy[];
+  brief: boolean;
   revealed: string[];
   epoch: number;
   hud: HudView;
@@ -50,7 +54,9 @@ type ExploreUi = {
   setAim: (a: Aim) => void;
   setSound: (v: boolean) => void;
   setReward: (r: RewardCopy | null) => void;
-  setPendingReward: (r: RewardCopy | null) => void;
+  queueRewards: (items: RewardCopy[]) => void;
+  dismissReward: () => void;
+  setBrief: (v: boolean) => void;
   noteRevealed: (id: string) => void;
   replayMissions: () => void;
   openInfo: (slug: string) => void;
@@ -100,7 +106,8 @@ export const useExploreUi = create<ExploreUi>((set, get) => ({
   aim: null,
   sound: true,
   reward: null,
-  pendingReward: null,
+  rewardQueue: [],
+  brief: false,
   revealed: [],
   epoch: 0,
   hud: {
@@ -135,7 +142,20 @@ export const useExploreUi = create<ExploreUi>((set, get) => ({
     set({ sound: v });
   },
   setReward: (r) => set({ reward: r }),
-  setPendingReward: (r) => set({ pendingReward: r }),
+  queueRewards: (items) => {
+    if (!items.length) return;
+    set((s) => {
+      const rewardQueue = [...s.rewardQueue, ...items];
+      const show = s.overlay === "none" && !s.reward;
+      return { rewardQueue, reward: show ? rewardQueue[0]! : s.reward };
+    });
+  },
+  dismissReward: () =>
+    set((s) => {
+      const rewardQueue = s.rewardQueue.slice(1);
+      return { rewardQueue, reward: s.overlay === "none" ? (rewardQueue[0] ?? null) : null };
+    }),
+  setBrief: (v) => set({ brief: v }),
   noteRevealed: (id) => {
     const revealed = get().revealed;
     if (!revealed.includes(id)) set({ revealed: [...revealed, id] });
@@ -148,7 +168,8 @@ export const useExploreUi = create<ExploreUi>((set, get) => ({
       missions: next,
       revealed: [],
       reward: null,
-      pendingReward: null,
+      rewardQueue: [],
+      brief: false,
       aim: null,
       epoch: s.epoch + 1,
     }));

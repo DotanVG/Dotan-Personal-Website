@@ -58,6 +58,6 @@ export function beamModel(): THREE.BufferGeometry {
 
 export function pillarModel(): THREE.BufferGeometry {
   const b = new MeshBuilder();
-  b.cylinder(0, 0, 0, 0.45, 0.08, 8.5, 7, "#fff3c4");
+  b.cylinder(0, 0, 0, 2.1, 0.45, 72, 8, "#fff3c4");
   return b.build();
 }

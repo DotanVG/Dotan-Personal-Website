@@ -259,6 +259,7 @@ export function HelpContent() {
   );
   return (
     <div className="mt-3 grid gap-4 sm:grid-cols-2">
+      <p className="text-sm text-[#1d222b]/80 sm:col-span-2">Grab a car and go. The marker points at your next stop, with the distance in meters.</p>
       <section>
         <h3 className="text-xs font-semibold uppercase tracking-widest text-[#b3402c]">Touch</h3>
         <dl className="mt-1">
