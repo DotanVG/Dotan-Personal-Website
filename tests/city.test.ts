@@ -5,6 +5,7 @@ import { education } from "@/content/education";
 import {
   CURB_HEIGHT,
   LANDMARK_SLUGS,
+  MONUMENT_SPOT,
   createCity,
   inWorldBounds,
   isRoad,
@@ -98,6 +99,20 @@ test("lane samples are on asphalt and inside the world", () => {
   for (const l of lanes) {
     assert.ok(isRoad(l.x, l.z), `lane (${l.x}, ${l.z}) off road`);
     assert.ok(inWorldBounds(l.x, l.z));
+  }
+});
+
+test("the First Charter spot is on the plaza, clear of the fountain, benches and spawn", () => {
+  sampleGround(city, MONUMENT_SPOT.x, MONUMENT_SPOT.z, gs);
+  assert.equal(gs.h, CURB_HEIGHT);
+  assert.equal(gs.surface, "paving");
+  assert.ok(!isRoad(MONUMENT_SPOT.x, MONUMENT_SPOT.z));
+  assert.ok(!overlapsStatic(MONUMENT_SPOT.x, MONUMENT_SPOT.z, 0.7, gs.h));
+  assert.ok(Math.hypot(MONUMENT_SPOT.x - city.spawn.x, MONUMENT_SPOT.z - city.spawn.z) > 8);
+  for (const ramp of city.ramps) {
+    const along = Math.abs((MONUMENT_SPOT.x - ramp.x) * Math.sin(ramp.yaw) + (MONUMENT_SPOT.z - ramp.z) * Math.cos(ramp.yaw));
+    const side = Math.abs((MONUMENT_SPOT.x - ramp.x) * Math.cos(ramp.yaw) - (MONUMENT_SPOT.z - ramp.z) * Math.sin(ramp.yaw));
+    assert.ok(along > ramp.halfLen + 0.7 || side > ramp.halfWid + 0.7);
   }
 });
 

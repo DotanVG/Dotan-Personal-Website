@@ -15,6 +15,13 @@ const SKID_SPACING_M = 0.42;
 /** Lateral slip (m/s) above which tyres leave marks. */
 const SKID_SLIP_MPS = 2.4;
 
+let confettiGen = 0;
+/** Paper burst for a mission reward. Safe to call when the scene is paused. */
+export function celebrateMission() {
+  confettiGen += 1;
+}
+
+const CONFETTI = ["#e3b04b", "#b3402c", "#f7f2e8", "#f2cf7e"];
 const gs: GroundSample = { h: 0, gx: 0, gz: 0, surface: "road" };
 const m4 = new THREE.Matrix4();
 const q = new THREE.Quaternion();
@@ -76,11 +83,36 @@ export function Effects() {
     ki: 0,
     lastSkid: new Map<number, { x: number; z: number }>(),
     smokeTimer: new Map<number, number>(),
+    seenConfetti: confettiGen,
   });
 
   useGameFrame(({ g, dt, events, reduced, paused }) => {
-    if (paused) return;
     const s = st.current;
+    if (s.seenConfetti !== confettiGen) {
+      s.seenConfetti = confettiGen;
+      if (!reduced) {
+        for (let n = 0; n < 24; n++) {
+          const a = (n / 24) * Math.PI * 2;
+          const sp = 2.2 + (n % 5) * 0.7;
+          const i = s.di;
+          res.debris.setColorAt(i, tmpColor.set(CONFETTI[n % CONFETTI.length]));
+          s.di = (s.di + 1) % MAX_DEBRIS;
+          Object.assign(s.debris[i], {
+            x: g.player.x,
+            y: g.player.y + 1.1,
+            z: g.player.z,
+            vx: Math.cos(a) * sp,
+            vy: 4.2 + (n % 4),
+            vz: Math.sin(a) * sp,
+            life: 2.8,
+            max: 2.8,
+            size: 0.14,
+            spin: (n % 2 ? 1 : -1) * 8,
+          });
+        }
+      }
+    }
+    if (!paused) {
     const puff = (x: number, y: number, z: number, vy: number, size: number, life: number, color: string, vx = 0, vz = 0) => {
       const i = s.si;
       s.si = (s.si + 1) % MAX_SMOKE;
@@ -160,8 +192,9 @@ export function Effects() {
       res.skids.instanceMatrix.needsUpdate = true;
     }
     if (s.lastSkid.size > 64) s.lastSkid.clear();
+    }
 
-    // Integrate debris: gravity, bounce, friction, fade by shrinking.
+    // Integrate debris even while a reward card pauses the city, so the burst can fall.
     for (let i = 0; i < MAX_DEBRIS; i++) {
       const p = s.debris[i];
       if (p.life <= 0) continue;
@@ -186,6 +219,7 @@ export function Effects() {
     }
     res.debris.instanceMatrix.needsUpdate = true;
     if (res.debris.instanceColor) res.debris.instanceColor.needsUpdate = true;
+    if (paused) return;
 
     // Integrate smoke: rise, drift, grow, then shrink away.
     for (let i = 0; i < MAX_SMOKE; i++) {

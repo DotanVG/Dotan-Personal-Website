@@ -1,11 +1,23 @@
 "use client";
 
 import { create } from "zustand";
+import { applyEvent, DEFAULT_MISSIONS, MISSIONS_KEY, type MissionState, type RewardCopy } from "@/lib/game/missions";
 import type { ContextKind, PlayerState } from "@/lib/game/sim";
 
 export type Overlay = "none" | "pause" | "info";
+export type PauseView = "menu" | "help" | "missions";
 export type TouchMode = "auto" | "on" | "off";
 export type Status = "loading" | "ready" | "lost";
+export type Aim = { slug: string; name: string } | null;
+
+/** Written from the HUD frame. The marker and distance read these nodes; nothing here causes a render. */
+export const missionRefs = {
+  marker: null as HTMLElement | null,
+  markerArrow: null as HTMLElement | null,
+  markerLabel: null as HTMLElement | null,
+  panelDist: null as HTMLElement | null,
+  pillar: null as { x: number; z: number; near: boolean } | null,
+};
 
 /** Discrete HUD fields: React re-renders only when one of these changes. */
 export type HudView = {
@@ -20,8 +32,16 @@ export type HudView = {
 
 type ExploreUi = {
   overlay: Overlay;
-  pauseView: "menu" | "help";
+  pauseView: PauseView;
   infoSlug: string | null;
+  missions: MissionState;
+  aim: Aim;
+  sound: boolean;
+  reward: RewardCopy | null;
+  rewardQueue: RewardCopy[];
+  brief: boolean;
+  revealed: string[];
+  epoch: number;
   hud: HudView;
   toast: { text: string; id: number } | null;
   touchMode: TouchMode;
@@ -29,7 +49,16 @@ type ExploreUi = {
   coarse: boolean;
   status: Status;
   coach: boolean;
-  openPause: (view?: "menu" | "help") => void;
+  openPause: (view?: PauseView) => void;
+  setMissions: (m: MissionState) => void;
+  setAim: (a: Aim) => void;
+  setSound: (v: boolean) => void;
+  setReward: (r: RewardCopy | null) => void;
+  queueRewards: (items: RewardCopy[]) => void;
+  dismissReward: () => void;
+  setBrief: (v: boolean) => void;
+  noteRevealed: (id: string) => void;
+  replayMissions: () => void;
   openInfo: (slug: string) => void;
   close: () => void;
   setHud: (h: HudView) => void;
@@ -41,6 +70,7 @@ type ExploreUi = {
 
 const TOUCH_KEY = "dotanv-explore-touch";
 export const COACH_KEY = "dotanv-explore-coach-seen";
+export const SOUND_KEY = "dotanv-explore-sound";
 
 /** Storage may be blocked (private mode, policy): never let that break the game. */
 export function readStorage(key: string): string | null {
@@ -72,6 +102,14 @@ export const useExploreUi = create<ExploreUi>((set, get) => ({
   overlay: "none",
   pauseView: "menu",
   infoSlug: null,
+  missions: DEFAULT_MISSIONS,
+  aim: null,
+  sound: true,
+  reward: null,
+  rewardQueue: [],
+  brief: false,
+  revealed: [],
+  epoch: 0,
   hud: {
     state: "onFoot",
     context: "none",
@@ -90,6 +128,52 @@ export const useExploreUi = create<ExploreUi>((set, get) => ({
   openPause: (view = "menu") => set({ overlay: "pause", pauseView: view }),
   openInfo: (slug) => set({ overlay: "info", infoSlug: slug }),
   close: () => set({ overlay: "none" }),
+  setMissions: (m) => {
+    writeStorage(MISSIONS_KEY, JSON.stringify(m));
+    set({ missions: m });
+  },
+  setAim: (a) => {
+    const cur = get().aim;
+    if (cur?.slug === a?.slug && cur?.name === a?.name) return;
+    set({ aim: a });
+  },
+  setSound: (v) => {
+    writeStorage(SOUND_KEY, v ? "1" : "0");
+    set({ sound: v });
+  },
+  setReward: (r) => set({ reward: r }),
+  queueRewards: (items) => {
+    if (!items.length) return;
+    set((s) => {
+      const rewardQueue = [...s.rewardQueue, ...items];
+      const show = s.overlay === "none" && !s.reward;
+      return { rewardQueue, reward: show ? rewardQueue[0]! : s.reward };
+    });
+  },
+  dismissReward: () =>
+    set((s) => {
+      const rewardQueue = s.rewardQueue.slice(1);
+      return { rewardQueue, reward: s.overlay === "none" ? (rewardQueue[0] ?? null) : null };
+    }),
+  setBrief: (v) => set({ brief: v }),
+  noteRevealed: (id) => {
+    const revealed = get().revealed;
+    if (!revealed.includes(id)) set({ revealed: [...revealed, id] });
+  },
+  replayMissions: () => {
+    const next = applyEvent(get().missions, { type: "replay" }).state;
+    writeStorage(MISSIONS_KEY, JSON.stringify(next));
+    missionRefs.pillar = null;
+    set((s) => ({
+      missions: next,
+      revealed: [],
+      reward: null,
+      rewardQueue: [],
+      brief: false,
+      aim: null,
+      epoch: s.epoch + 1,
+    }));
+  },
   setHud: (h) => {
     if (!sameHud(get().hud, h)) set({ hud: { ...h } });
   },

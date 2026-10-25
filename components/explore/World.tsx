@@ -10,6 +10,7 @@ import { INSPECT_RADIUS_M } from "@/lib/game/sim";
 import { SUN_DIR, buildCityGeometry } from "./cityMesh";
 import { MeshBuilder } from "./meshBuilder";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
+import { MissionScenery } from "./Missions";
 
 const SKY_TOP = new THREE.Color("#5f9fd3");
 const SKY_MID = new THREE.Color("#a9cde6");
@@ -47,6 +48,7 @@ export function World({ city }: { city: City }) {
         <LandmarkSign key={l.slug} landmark={l} />
       ))}
       <Pads landmarks={city.landmarks} />
+      <MissionScenery city={city} />
     </>
   );
 }

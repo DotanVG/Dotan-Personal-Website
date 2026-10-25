@@ -29,6 +29,8 @@ export async function launch({ width = 1440, height = 900, mobile = false, touch
   const page = await context.newPage();
   // Never talk to third parties from tests (analytics, social proof, the contact form).
   await page.route(/googletagmanager|google-analytics|provesrc|formspree/, (r) => r.abort());
+  // Vercel analytics scripts 404 against a local server and would fail the console-error check.
+  await page.route(/\/_vercel\//, (r) => r.fulfill({ status: 204 }));
   const logs = [];
   page.on("console", (m) => {
     if (m.type() === "error" || m.type() === "warning") logs.push(`${m.type()}: ${m.text()}`);
@@ -41,11 +43,16 @@ export async function launch({ width = 1440, height = 900, mobile = false, touch
 export const realErrors = (logs) =>
   logs.filter((l) => !/Failed to load resource: net::ERR_FAILED|preloaded using link preload/.test(l));
 
-export async function openExplore(page, query = "?mode=explore") {
+export async function openExplore(page, query = "?mode=explore", { settle = "time" } = {}) {
   await page.goto(BASE + "/" + query, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => window.__explore?.snapshot && !document.querySelector("[data-explore] .animate-spin"), null, {
     timeout: 60000,
   });
+  if (settle === "reward") {
+    // A card up at boot pauses the simulation, so time stays under 0.4.
+    await page.getByTestId("mission-reward").waitFor({ timeout: 20000 });
+    return;
+  }
   // Let the first frames settle.
   await page.waitForFunction(() => window.__explore.snapshot().time > 0.4, null, { timeout: 20000 });
 }

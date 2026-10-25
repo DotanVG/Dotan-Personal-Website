@@ -191,6 +191,9 @@ const BLOCK_KINDS: BlockKind[][] = [
 /** The hero car's kerbside spot beside the spawn point; kept clear of lamps. */
 const SPAWN_CAR_SPOT = { x: 3.6, z: 28 - PARKING_OFFSET };
 
+/** First Charter plinth, on the plaza diagonal so it clears the fountain, benches and spawn. */
+export const MONUMENT_SPOT = { x: 4.6, z: 4.6 };
+
 const PIER = { x0: 36, x1: 44, z0: PROMENADE_EDGE_Z - 1, z1: 134 };
 const PIER_HEAD = { x0: 27, x1: 53, z0: 133, z1: 153 };
 const BEACH_GAPS: [number, number][] = [

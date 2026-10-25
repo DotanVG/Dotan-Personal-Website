@@ -2,6 +2,7 @@
 
 import type { RefObject } from "react";
 import { cn } from "@/lib/cn";
+import { GuideMarker, MissionBrief, MissionChip } from "./Missions";
 import type { HudView } from "./uiStore";
 
 export type HudRefs = {
@@ -39,8 +40,8 @@ export function Hud({
   return (
     <div className="pointer-events-none absolute inset-0 z-30 font-sans">
       {/* Top bar */}
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-[max(12px,env(safe-area-inset-left))] pt-[max(10px,env(safe-area-inset-top))]">
-        <button type="button" onClick={onClean} className={pill}>
+      <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-[max(12px,env(safe-area-inset-left))] pt-[max(10px,env(safe-area-inset-top))]">
+        <button type="button" onClick={onClean} className={pill} data-testid="clean-view">
           <span aria-hidden>←</span>
           <span>
             Clean<span className="max-[359px]:hidden"> view</span>
@@ -70,8 +71,12 @@ export function Hud({
         </div>
       </div>
 
+      <GuideMarker />
+
       {/* Speed, condition, and messages stack in one column so they never overlap. */}
-      <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+56px)] flex flex-col items-center gap-2 px-3 [@media(max-height:500px)]:top-[max(10px,env(safe-area-inset-top))]">
+      <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+56px)] z-10 flex flex-col items-center gap-2 px-3 [@media(max-height:500px)]:top-[max(10px,env(safe-area-inset-top))]">
+        {!coach && <MissionChip driving={driving} />}
+        {!coach && <MissionBrief driving={driving} />}
         {driving && (
           <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-[#1d222b]/70 px-4 py-2 text-white shadow-md backdrop-blur-sm" data-testid="speedo">
             <div className="flex items-baseline gap-1">
@@ -121,7 +126,7 @@ export function Hud({
         </div>
       )}
 
-      {coach && <Coach touch={touch} onDismiss={onDismissCoach} />}
+      {coach && <Coach onDismiss={onDismissCoach} />}
     </div>
   );
 }
@@ -136,19 +141,11 @@ function keyPrompt(h: HudView): { key: string; text: string } | null {
   return null;
 }
 
-function Coach({ touch, onDismiss }: { touch: boolean; onDismiss: () => void }) {
+function Coach({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+62px)] flex justify-center px-3 [@media(max-height:500px)]:top-[max(10px,env(safe-area-inset-top))]">
-      <div className="pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border border-white/20 bg-[#1d222b]/85 p-3.5 text-white shadow-xl backdrop-blur-sm">
-        <div className="text-sm leading-relaxed">
-          <p className="font-semibold">Grab a car and go.</p>
-          <p className="mt-0.5 text-white/85">
-            {touch
-              ? "Left thumb moves or steers. Walk up to a car and tap Enter. Drag the scenery to look around."
-              : "WASD to move and drive, E to get in or out, Space to jump or handbrake, drag to look."}{" "}
-            Glowing pads by the buildings open Dotan&apos;s story.
-          </p>
-        </div>
+    <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+56px)] z-10 flex justify-center px-3">
+      <div className="pointer-events-auto flex max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-white/20 bg-[#1d222b]/85 py-1 pl-3.5 pr-1 text-white shadow-md backdrop-blur-sm">
+        <p className="text-sm font-medium">Read any 3 landmarks.</p>
         <button
           type="button"
           onClick={onDismiss}

@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import type { TouchMode } from "./uiStore";
+import { createCity } from "@/lib/game/city";
+import { applyEvent, checklist, liveProjectCount, menuLine } from "@/lib/game/missions";
+import { primeChime } from "./chime";
+import { useExploreUi, type TouchMode } from "./uiStore";
+
+const CITY = createCity(7);
 
 /** Native modal dialog: focus moves in, Escape/backdrop close, focus returns on close. */
 export function Modal({
@@ -72,12 +77,12 @@ export function PauseMenu({
   onContact,
 }: {
   open: boolean;
-  view: "menu" | "help";
+  view: "menu" | "help" | "missions";
   driving: boolean;
   touchMode: TouchMode;
   reduced: boolean;
   onResume: () => void;
-  onView: (v: "menu" | "help") => void;
+  onView: (v: "menu" | "help" | "missions") => void;
   onUnstuck: () => void;
   onRestart: () => void;
   onTouchMode: (m: TouchMode) => void;
@@ -86,7 +91,9 @@ export function PauseMenu({
 }) {
   return (
     <Modal open={open} onClose={onResume} labelledBy="pause-title">
-      {view === "help" ? (
+      {view === "missions" ? (
+        <MissionsSettings onBack={() => onView("menu")} onResume={onResume} driving={driving} />
+      ) : view === "help" ? (
         <div className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 id="pause-title" className="font-display text-xl font-semibold">
@@ -118,6 +125,9 @@ export function PauseMenu({
             )}
             <button type="button" className={secondary} onClick={() => onView("help")}>
               Controls
+            </button>
+            <button type="button" className={secondary} onClick={() => onView("missions")} data-testid="missions-menu">
+              Missions
             </button>
             <fieldset className="rounded-xl border border-[#1d222b]/15 bg-white/40 px-3 pb-3 pt-1 [@media(max-height:500px)_and_(min-width:640px)]:row-span-2">
               <legend className="px-1 text-sm font-semibold">Touch controls</legend>
@@ -158,6 +168,88 @@ export function PauseMenu({
   );
 }
 
+function MissionsSettings({ driving, onBack, onResume }: { driving: boolean; onBack: () => void; onResume: () => void }) {
+  const missions = useExploreUi((s) => s.missions);
+  const sound = useExploreUi((s) => s.sound);
+  const [ask, setAsk] = useState(false);
+  const items = checklist(missions, CITY.landmarks, liveProjectCount());
+  const line = menuLine(missions, liveProjectCount(), driving);
+  const setHidden = (hidden: boolean) => {
+    const next = applyEvent(useExploreUi.getState().missions, { type: "hide", hidden }).state;
+    useExploreUi.getState().setMissions(next);
+  };
+  return (
+    <div className="p-5 sm:p-6" data-testid="missions-panel">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="pause-title" className="font-display text-xl font-semibold">
+          Missions
+        </h2>
+        <button type="button" onClick={onBack} className="min-h-11 rounded-full px-4 text-sm font-semibold underline-offset-4 hover:underline">
+          Back
+        </button>
+      </div>
+      <p className="mt-1 text-sm text-[#1d222b]/75">{line}</p>
+      <ul data-testid="mission-check" className="mt-3 grid gap-1 sm:grid-cols-2">
+        {items.map((item) => (
+          <li key={item.id} className="flex min-h-9 items-center gap-2 text-sm">
+            <span aria-hidden className={item.checked ? "text-[#2f7d4a]" : "text-[#1d222b]/35"}>
+              {item.checked ? "✓" : "○"}
+            </span>
+            <span className={item.checked ? "text-[#1d222b]" : "text-[#1d222b]/70"}>{item.label}</span>
+          </li>
+        ))}
+      </ul>
+      <fieldset className="mt-4 rounded-xl border border-[#1d222b]/15 bg-white/40 px-3 pb-3 pt-1">
+        <legend className="px-1 text-sm font-semibold">Sound</legend>
+        <div className="grid grid-cols-2 gap-1.5">
+          {([true, false] as const).map((on) => (
+            <label
+              key={on ? "on" : "off"}
+              className={cn(
+                "flex min-h-11 cursor-pointer items-center justify-center rounded-lg text-sm font-semibold has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#b3402c]",
+                sound === on ? "bg-[#1d222b] text-white" : "bg-white/70 text-[#1d222b] hover:bg-white",
+              )}
+            >
+              <input
+                type="radio"
+                name="mission-sound"
+                checked={sound === on}
+                onChange={() => {
+                  useExploreUi.getState().setSound(on);
+                  if (on) primeChime();
+                }}
+                className="sr-only"
+              />
+              {on ? "On" : "Off"}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+        <button type="button" className={secondary} onClick={() => setHidden(!missions.hidden)}>
+          {missions.hidden ? "Show hint" : "Hide hint"}
+        </button>
+        <button type="button" className={secondary} onClick={() => setHidden(true)}>
+          Skip
+        </button>
+        {ask ? (
+          <button type="button" className={cn(primary, "sm:col-span-2")} onClick={() => useExploreUi.getState().replayMissions()}>
+            Replay missions
+          </button>
+        ) : (
+          <button type="button" className={cn(secondary, "sm:col-span-2")} onClick={() => setAsk(true)}>
+            Replay
+          </button>
+        )}
+        <button type="button" className={cn(primary, "sm:col-span-2")} onClick={onResume} autoFocus>
+          Resume
+        </button>
+      </div>
+      {ask && <p className="mt-2 text-xs text-[#1d222b]/65">Replay clears what you have read and the monument. The city itself stays.</p>}
+    </div>
+  );
+}
+
 export function HelpContent() {
   const row = (a: string, b: string) => (
     <div className="flex items-baseline justify-between gap-3 border-b border-[#1d222b]/10 py-1.5 last:border-0">
@@ -167,6 +259,7 @@ export function HelpContent() {
   );
   return (
     <div className="mt-3 grid gap-4 sm:grid-cols-2">
+      <p className="text-sm text-[#1d222b]/80 sm:col-span-2">Grab a car and go. The marker points at your next stop, with the distance in meters.</p>
       <section>
         <h3 className="text-xs font-semibold uppercase tracking-widest text-[#b3402c]">Touch</h3>
         <dl className="mt-1">
