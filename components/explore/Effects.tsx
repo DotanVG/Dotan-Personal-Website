@@ -83,7 +83,7 @@ export function Effects() {
     ki: 0,
     lastSkid: new Map<number, { x: number; z: number }>(),
     smokeTimer: new Map<number, number>(),
-    seenConfetti: 0,
+    seenConfetti: confettiGen,
   });
 
   useGameFrame(({ g, dt, events, reduced, paused }) => {

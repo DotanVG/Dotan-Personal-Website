@@ -63,7 +63,7 @@ export function closeChime() {
   ctx = null;
   if (!c) return;
   try {
-    void c.close();
+    void c.close().catch(() => {});
   } catch {
     // already closed
   }

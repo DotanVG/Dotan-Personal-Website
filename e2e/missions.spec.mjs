@@ -45,9 +45,9 @@ test("Read the City, then a driven lighthouse read, with the clean view left cle
     await panel.waitFor();
     assert.match(await panel.innerText(), /Read the City/);
     assert.match(await panel.innerText(), /Open any 3 landmarks/);
-    await page.getByRole("button", { name: "Controls" }).click();
+    await panel.getByRole("button", { name: "Controls", exact: true }).click();
     await page.getByText("Grab a car and go.").waitFor();
-    await page.getByRole("button", { name: "Close" }).click();
+    await panel.getByRole("button", { name: "Close", exact: true }).click();
     await panel.waitFor({ state: "hidden" });
     const laid = await boxes(page);
     assert.ok(laid.clean?.shown, "clean view is on screen");
@@ -91,19 +91,12 @@ test("Read the City, then a driven lighthouse read, with the clean view left cle
     assert.ok(back.done.includes("read-city"));
     await page.getByText(/Welcome back/).waitFor();
   } finally {
-    assert.deepEqual(realErrors(logs), []);
     await browser.close();
+    assert.deepEqual(realErrors(logs), []);
   }
 });
 
 test("Coast Run ends without mentioning an arcade, and replay starts over", { timeout: 120000 }, async () => {
-  const seed = {
-    v: 1,
-    visited: ["ness", "kanomi", "electra"],
-    drove: true,
-    done: ["read-city"],
-    hidden: false,
-  };
   const { browser, page, logs } = await launch({
     width: 1280,
     height: 800,
@@ -142,8 +135,8 @@ test("Coast Run ends without mentioning an arcade, and replay starts over", { ti
     await page.getByRole("button", { name: "Resume" }).click();
     assert.match(await page.getByTestId("mission-chip").getAttribute("aria-label"), /Read the City, 0 of 3/);
   } finally {
-    assert.deepEqual(realErrors(logs), []);
     await browser.close();
+    assert.deepEqual(realErrors(logs), []);
   }
 });
 
@@ -158,7 +151,8 @@ test("a lighthouse read during Read the City finishes Coast Run instead of sendi
       ),
   });
   try {
-    await openExplore(page);
+    // The reward card pauses the sim, so game time never reaches the usual settle threshold.
+    await openExplore(page, "?mode=explore", { settle: "reward" });
     let sawLit = false;
     for (let i = 0; i < 3; i++) {
       const reward = page.getByTestId("mission-reward");
@@ -173,8 +167,8 @@ test("a lighthouse read during Read the City finishes Coast Run instead of sendi
     assert.ok(done.done.includes("coast-run"));
     assert.equal(await page.getByTestId("mission-chip").count(), 0);
   } finally {
-    assert.deepEqual(realErrors(logs), []);
     await browser.close();
+    assert.deepEqual(realErrors(logs), []);
   }
 });
 
@@ -198,8 +192,8 @@ test("the mission panel fits a phone and stays closed until asked", { timeout: 1
     await page.getByRole("button", { name: "Close" }).tap();
     await panel.waitFor({ state: "hidden" });
   } finally {
-    assert.deepEqual(realErrors(logs), []);
     await browser.close();
+    assert.deepEqual(realErrors(logs), []);
   }
 });
 
@@ -228,7 +222,7 @@ test("a blocked store still shows the chip, on a phone and with reduced motion",
     const s = await snap(page);
     assert.equal(s.state, "onFoot");
   } finally {
-    assert.deepEqual(realErrors(logs), []);
     await browser.close();
+    assert.deepEqual(realErrors(logs), []);
   }
 });

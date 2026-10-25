@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   authors: [{ name: site.fullName, url: site.url }],
   creator: site.fullName,
   other: {
-    date: "2026-10-25T08:18:11+00:00",
+    date: "2026-10-25T08:56:51+00:00",
   },
   openGraph: {
     type: "website",
