@@ -2,6 +2,7 @@
 
 import type { RefObject } from "react";
 import { cn } from "@/lib/cn";
+import { MissionChip } from "./Missions";
 import type { HudView } from "./uiStore";
 
 export type HudRefs = {
@@ -39,8 +40,8 @@ export function Hud({
   return (
     <div className="pointer-events-none absolute inset-0 z-30 font-sans">
       {/* Top bar */}
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-[max(12px,env(safe-area-inset-left))] pt-[max(10px,env(safe-area-inset-top))]">
-        <button type="button" onClick={onClean} className={pill}>
+      <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-[max(12px,env(safe-area-inset-left))] pt-[max(10px,env(safe-area-inset-top))]">
+        <button type="button" onClick={onClean} className={pill} data-testid="clean-view">
           <span aria-hidden>←</span>
           <span>
             Clean<span className="max-[359px]:hidden"> view</span>
@@ -71,7 +72,8 @@ export function Hud({
       </div>
 
       {/* Speed, condition, and messages stack in one column so they never overlap. */}
-      <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+56px)] flex flex-col items-center gap-2 px-3 [@media(max-height:500px)]:top-[max(10px,env(safe-area-inset-top))]">
+      <div className="absolute inset-x-0 top-[calc(max(10px,env(safe-area-inset-top))+56px)] z-10 flex flex-col items-center gap-2 px-3 [@media(max-height:500px)]:top-[max(10px,env(safe-area-inset-top))]">
+        {!coach && <MissionChip driving={driving} />}
         {driving && (
           <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-[#1d222b]/70 px-4 py-2 text-white shadow-md backdrop-blur-sm" data-testid="speedo">
             <div className="flex items-baseline gap-1">
@@ -146,7 +148,7 @@ function Coach({ touch, onDismiss }: { touch: boolean; onDismiss: () => void }) 
             {touch
               ? "Left thumb moves or steers. Walk up to a car and tap Enter. Drag the scenery to look around."
               : "WASD to move and drive, E to get in or out, Space to jump or handbrake, drag to look."}{" "}
-            Glowing pads by the buildings open Dotan&apos;s story.
+            Glowing pads by the buildings open Dotan&apos;s story. First mission: read any 3 glowing landmarks.
           </p>
         </div>
         <button
