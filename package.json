@@ -47,6 +47,7 @@
   "overrides": {
     "postcss": "^8.5.29",
     "sharp": "0.35.5",
-    "nanoid": "3.3.19"
+    "nanoid": "3.3.19",
+    "postcss-selector-parser": "^7.1.6"
   }
 }
