@@ -3,6 +3,7 @@
 import { motion, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const variants: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -20,14 +21,16 @@ export function RevealOnScroll({
   delay?: number;
   as?: "div" | "section" | "li" | "article";
 }) {
+  const reduced = useReducedMotion();
   const MotionTag = motion[as] as typeof motion.div;
   return (
     <MotionTag
-      initial="hidden"
-      whileInView="show"
+      data-scroll-reveal
+      initial={reduced ? false : "hidden"}
+      whileInView={reduced ? undefined : "show"}
       viewport={{ once: true, margin: "-80px" }}
-      variants={variants}
-      transition={{ delay }}
+      variants={reduced ? undefined : variants}
+      transition={reduced ? undefined : { delay }}
       className={cn(className)}
     >
       {children}

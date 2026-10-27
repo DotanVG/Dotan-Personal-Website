@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AnalyticsProvider } from "@/components/providers/AnalyticsProvider";
-import { site } from "@/content/site";
+import { profileJsonLd, site } from "@/content/site";
 import "./globals.css";
 
 const sans = Inter({
@@ -80,19 +80,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const personJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  name: site.fullName,
-  givenName: "Dotan",
-  familyName: "Veretzky",
-  email: `mailto:${site.email}`,
-  telephone: site.phone,
-  url: site.url,
-  jobTitle: site.tagline,
-  sameAs: [site.social.linkedin, site.social.github, site.social.itch],
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -103,11 +90,14 @@ export default function RootLayout({
       className={`${sans.variable} ${display.variable} ${mono.variable}`}
     >
       <body className="bg-canvas text-ink antialiased">
+        <noscript>
+          <style>{`[data-scroll-reveal] { opacity: 1 !important; transform: none !important; }`}</style>
+        </noscript>
         <ThemeProvider>{children}</ThemeProvider>
         <AnalyticsProvider />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
         />
       </body>
     </html>

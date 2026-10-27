@@ -67,6 +67,11 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    [data-scroll-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
     *,
     *::before,
     *::after {
