@@ -100,7 +100,7 @@ export function Hero() {
               <Button href="#contact">Let&apos;s get in touch →</Button>
             </Magnetic>
             <Magnetic strength={0.25}>
-              <Button href="#experience" variant="outline">
+              <Button href="#projects" variant="outline">
                 See my work
               </Button>
             </Magnetic>
