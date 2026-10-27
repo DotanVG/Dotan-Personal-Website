@@ -2,10 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BASE, launch, realErrors, sleep } from "./lib.mjs";
 
-for (const idleApi of [true, false]) {
-  test(`Mini Dotan defers assets and stays interactive (${idleApi ? "idle" : "timer fallback"})`, async () => {
+for (const width of [390, 1440]) for (const idleApi of [true, false]) {
+  test(`Mini Dotan defers assets and stays interactive (${width}px, ${idleApi ? "idle" : "timer fallback"})`, async () => {
     const { browser, page, logs } = await launch({
-      width: 390, mobile: true, reducedMotion: idleApi ? "no-preference" : "reduce",
+      width, mobile: width < 768, reducedMotion: idleApi ? "no-preference" : "reduce",
       init: idleApi ? undefined : () => localStorage.setItem("mini-dotan-quiet", "true"),
     });
     await page.route("**/_vercel/**", (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
@@ -28,17 +28,20 @@ for (const idleApi of [true, false]) {
         await sleep(700);
         assert.equal(await page.locator("[data-mini-dotan]").count(), 0);
         assert.deepEqual(requests, [], "no atlas or strip requests before idle");
+        const pendingBefore = await page.evaluate(() => window.pendingIdle.size);
         await page.evaluate(() => {
           history.pushState({}, "", "?mode=explore");
           dispatchEvent(new PopStateEvent("popstate"));
         });
-        await page.waitForFunction(() => window.pendingIdle.size === 0);
+        // Next's lazy scripts can keep unrelated callbacks in the same idle queue.
+        await page.waitForFunction((count) => window.pendingIdle.size < count, pendingBefore);
         assert.deepEqual(requests, [], "unmount cancels pending initialization");
+        const pendingAfter = await page.evaluate(() => window.pendingIdle.size);
         await page.evaluate(() => {
           history.pushState({}, "", "/");
           dispatchEvent(new PopStateEvent("popstate"));
         });
-        await page.waitForFunction(() => window.pendingIdle.size > 0);
+        await page.waitForFunction((count) => window.pendingIdle.size > count, pendingAfter);
         await page.evaluate(() => {
           for (const callback of window.pendingIdle.values()) callback({ didTimeout: false, timeRemaining: () => 50 });
           window.pendingIdle.clear();
@@ -50,12 +53,15 @@ for (const idleApi of [true, false]) {
         const dock = document.querySelector("[data-mini-dotan]");
         return dock?.dataset.state === "idle" && !dock.dataset.arriving;
       });
-      const atlas = await page.evaluate(async () => {
+      const sheet = width < 768 ? "spritesheet-mobile.webp" : "spritesheet.webp";
+      assert.ok(await dock.locator("[data-pose]").evaluate((el, sheet) => getComputedStyle(el).backgroundImage.includes(sheet), sheet));
+      assert.deepEqual(requests.filter((url) => /\/spritesheet[^/]*\.webp$/.test(url)), [`${BASE}/pets/mini-dotan/${sheet}`], "only the matching atlas is fetched");
+      const atlas = await page.evaluate(async (sheet) => {
         const image = new Image();
-        image.src = "/pets/mini-dotan/spritesheet.webp";
+        image.src = `/pets/mini-dotan/${sheet}`;
         await image.decode();
         return { width: image.naturalWidth, height: image.naturalHeight };
-      });
+      }, sheet);
       assert.deepEqual(atlas, { width: 1536, height: 2288 });
       await dock.getByRole("button", { name: "Mini Dotan settings" }).click();
       await dock.getByRole("button", { name: "Hide Mini Dotan" }).click();
