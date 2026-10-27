@@ -136,6 +136,12 @@
   background-size: 768px 1144px;
   background-position: -22px 1px;
 }
+@media (max-width: 767px) {
+  .sprite,
+  .face {
+    background-image: url("/pets/mini-dotan/spritesheet-mobile.webp");
+  }
+}
 .dock[data-state="hidden"] .face,
 .dock[data-arriving] .face {
   display: block;
