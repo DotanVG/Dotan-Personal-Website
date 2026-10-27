@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/googlec37322bd49de680d.html"
+  to = "/googlec37322bd49de680d.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "https://dotanv.vercel.app/:splat"
+  status = 301
+  force = true

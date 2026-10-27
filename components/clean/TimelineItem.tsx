@@ -21,6 +21,7 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
   return (
     <motion.li
       data-pet-context={item.slug}
+      data-scroll-reveal
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-15%" }}
@@ -63,6 +64,7 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
         </div>
 
         <motion.h3
+          data-scroll-reveal
           initial={{ x: -6 }}
           whileInView={{ x: 0 }}
           viewport={{ once: true, margin: "-15%" }}
@@ -76,6 +78,7 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
       </div>
 
       <motion.div
+        data-scroll-reveal
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-12%" }}
@@ -120,6 +123,7 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
               {item.bullets.map((b, i) => (
                 <motion.li
                   key={i}
+                  data-scroll-reveal
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, margin: "-10%" }}

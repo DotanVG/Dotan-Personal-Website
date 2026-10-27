@@ -30,13 +30,29 @@ NEXT_PUBLIC_SITE_URL=https://dotanv.vercel.app
 
 ## Custom domain
 
-The current public domain is served by Netlify. We will only swap DNS to
-Vercel after Round 2 (the perf/best-practices pass) and after Dotan gives the
-green light. To swap:
+For a future custom domain, after Dotan approves the DNS change:
 
 1. In Vercel → `dotanv` project → **Settings → Domains**, add
    `dotanvg.com` (or whichever apex domain you use).
 2. Update the DNS records on the registrar to the values Vercel shows.
-3. Decommission the Netlify deploy.
 
-Until cutover, the Netlify site stays the canonical public URL.
+Keep the legacy Netlify deploy active for the redirects below.
+
+## Legacy Netlify redirect
+
+Vercel (`https://dotanv.vercel.app`) is the canonical public URL. The root
+`netlify.toml` publishes the legacy static files from `.` without a build command,
+preserves the Google verification file, and redirects other paths permanently
+to Vercel. Keep the legacy Netlify site active to serve those redirects.
+
+Dotan must confirm in the [Netlify dashboard](https://app.netlify.com/) that
+`dotanv.netlify.app` is connected to this repository and a branch containing
+`netlify.toml`, with no dashboard build command or Next.js framework integration
+overriding this static deployment. That connection cannot be verified here.
+After deploying, confirm the verification file returns 200 and other paths
+return 301 to their corresponding Vercel paths.
+
+Next.js serves files from `public/` and routes from `app/`; the legacy root HTML,
+PHP, XML and verification files and `netlify.toml` do not become Next.js routes.
+There is no `.vercelignore` or Next.js config that copies those root files into
+the public output. Vercel continues to use `next build`.

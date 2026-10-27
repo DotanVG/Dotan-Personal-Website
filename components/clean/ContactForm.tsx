@@ -4,11 +4,13 @@ import { useId, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { site } from "@/content/site";
 import { trackEvent } from "@/lib/analytics";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 export type ContactStatus = "idle" | "submitting" | "success" | "error";
 
 export function ContactForm({ compact = false, onStatusChange }: { compact?: boolean; onStatusChange?: (status: ContactStatus) => void }) {
   const id = useId();
+  const reduced = useReducedMotion();
   const [status, updateStatus] = useState<ContactStatus>("idle");
   function setStatus(next: ContactStatus) {
     updateStatus(next);
@@ -60,9 +62,10 @@ export function ContactForm({ compact = false, onStatusChange }: { compact?: boo
         {status === "success" ? (
           <motion.div
             key="success"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            data-scroll-reveal
+            initial={reduced ? false : { opacity: 0, y: 8 }}
+            animate={reduced ? undefined : { opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0 }}
             className="relative flex flex-col items-start gap-3 py-8"
           >
             <span aria-hidden className="text-3xl">
@@ -93,9 +96,10 @@ export function ContactForm({ compact = false, onStatusChange }: { compact?: boo
         ) : (
           <motion.form
             key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            data-scroll-reveal
+            initial={reduced ? false : { opacity: 0 }}
+            animate={reduced ? undefined : { opacity: 1 }}
+            exit={reduced ? undefined : { opacity: 0 }}
             onSubmit={onSubmit}
             className="relative flex flex-col gap-4"
             aria-busy={status === "submitting"}
