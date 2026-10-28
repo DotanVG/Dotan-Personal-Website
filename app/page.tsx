@@ -1,6 +1,7 @@
 import { Nav } from "@/components/clean/Nav";
 import { Hero } from "@/components/clean/Hero";
 import { About } from "@/components/clean/About";
+import { Projects } from "@/components/clean/Projects";
 import { ExperienceTimeline } from "@/components/clean/ExperienceTimeline";
 import { EducationTimeline } from "@/components/clean/EducationTimeline";
 import { Contact } from "@/components/clean/Contact";
@@ -24,6 +25,7 @@ export default function Page() {
               <main>
                 <Hero />
                 <About />
+                <Projects />
                 <ExperienceTimeline />
                 <EducationTimeline />
                 <Contact />
