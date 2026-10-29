@@ -10,18 +10,16 @@
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/resolve-ts.mjs --test tests/*.test.ts tests/*.test.mjs scripts/*.test.ts",
     "build:e2e": "node e2e/build.mjs",
-    "test:e2e": "node --test --test-concurrency=1 e2e/*.spec.mjs"
+    "test:e2e": "node --test --test-concurrency=1 e2e/*.spec.mjs",
+    "test:e2e:smoke": "node --test --test-concurrency=1 e2e/seo.spec.mjs e2e/analytics-loading.spec.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.0.0",
-    "@react-three/rapier": "^2.1.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
-    "detect-gpu": "^5.0.70",
     "framer-motion": "^11.11.17",
-    "maath": "^0.10.8",
     "next": "^15.5.28",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",

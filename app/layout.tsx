@@ -97,7 +97,7 @@ export default function RootLayout({
         <AnalyticsProvider />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd).replace(/</g, "\\u003c") }}
         />
       </body>
     </html>

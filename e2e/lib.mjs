@@ -41,7 +41,11 @@ export async function launch({ width = 1440, height = 900, mobile = false, touch
 
 /** Errors other than the blocked third-party requests above. */
 export const realErrors = (logs) =>
-  logs.filter((l) => !/Failed to load resource: net::ERR_FAILED|preloaded using link preload/.test(l));
+  logs.filter((l) =>
+    !/Failed to load resource: net::ERR_FAILED|preloaded using link preload/.test(l) &&
+    // Linux Chromium lacks Bluetooth support; the deny policy still stays in place.
+    l !== "warning: Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'."
+  );
 
 export async function openExplore(page, query = "?mode=explore", { settle = "time" } = {}) {
   await page.goto(BASE + "/" + query, { waitUntil: "domcontentloaded" });

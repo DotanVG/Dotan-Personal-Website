@@ -63,7 +63,7 @@ No description provided.
 ## Project context
 
 **Dotan Personal Website** — portfolio and personal site for Dotan VG.
-Stack: Next.js 15, React 19, Three.js via @react-three/fiber + @react-three/drei + @react-three/rapier, Framer Motion, Tailwind CSS, TypeScript.
+Stack: Next.js 15, React 19, Three.js via @react-three/fiber + @react-three/drei, Framer Motion, Tailwind CSS, TypeScript.
 Deploy: Vercel (production branch = `main`). Every push to `main` triggers a prod build; feature branches get preview URLs.
 
 Repo layout:
