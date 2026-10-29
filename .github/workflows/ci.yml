@@ -52,7 +52,8 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in {1..60}; do
-            if curl --fail --silent "$E2E_BASE_URL" > /dev/null; then
+            if curl --fail --silent --show-error --max-time 15 --connect-timeout 5 --retry 2 --retry-max-time 50 "$E2E_BASE_URL" > /dev/null; then
+              npm run smoke -- "$E2E_BASE_URL"
               npm run test:e2e:smoke
               exit $?
             fi

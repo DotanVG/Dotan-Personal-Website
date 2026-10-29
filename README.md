@@ -44,8 +44,10 @@ Open `/?mode=explore`. Everything plays on a phone held upright as well as with 
 
 ## Run Locally
 
+Use Node 22 (`.nvmrc`), at least 22.18 for the test loader.
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -58,7 +60,12 @@ npm run typecheck
 npm run lint
 npm run build
 npm test            # simulation, input and layout tests (Node >= 22.18)
+npm run smoke       # HTTP GET checks of the documented staging preview and its assets
 ```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the smoke URL override, authentication
+limits, deployment configuration and CI checks. Feature-branch Git deployments
+are disabled; only `main` and `staging` are enabled in `vercel.json`.
 
 Browser checks run against a production build with a read-only test hook compiled in (the site's CSP blocks the dev server's `eval`, so the dev server can't be used for this):
 
