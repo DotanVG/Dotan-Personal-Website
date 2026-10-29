@@ -11,7 +11,8 @@
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/resolve-ts.mjs --test tests/*.test.ts tests/*.test.mjs scripts/*.test.ts",
     "build:e2e": "node e2e/build.mjs",
     "test:e2e": "node --test --test-concurrency=1 e2e/*.spec.mjs",
-    "test:e2e:smoke": "node --test --test-concurrency=1 e2e/seo.spec.mjs e2e/analytics-loading.spec.mjs"
+    "test:e2e:smoke": "node --test --test-concurrency=1 e2e/seo.spec.mjs e2e/analytics-loading.spec.mjs",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",

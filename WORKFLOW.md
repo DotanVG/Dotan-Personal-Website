@@ -15,7 +15,7 @@ workspace:
 hooks:
   after_create: |
     git clone --depth 1 --branch staging https://github.com/DotanVG/Dotan-Personal-Website.git .
-    npm install
+    npm ci
   before_run: |
     git fetch origin
     git merge --ff-only origin/staging
@@ -64,7 +64,7 @@ No description provided.
 
 **Dotan Personal Website** — portfolio and personal site for Dotan VG.
 Stack: Next.js 15, React 19, Three.js via @react-three/fiber + @react-three/drei, Framer Motion, Tailwind CSS, TypeScript.
-Deploy: Vercel (production branch = `main`). Every push to `main` triggers a prod build; feature branches get preview URLs.
+Deploy: `vercel.json` enables Vercel Git deployments only for `main` and `staging`; feature branches are disabled. Dashboard production-branch and build overrides are not verified by the repo. See `DEPLOYMENT.md` for configuration and the staging HTTP smoke check.
 
 Repo layout:
 - `app/` — Next.js App Router pages and layouts
@@ -75,10 +75,15 @@ Repo layout:
 - `public/` — static assets
 
 Key commands:
+- Use Node 22 from `.nvmrc` (at least 22.18 for the test loader); install with `npm ci`.
 - `npm run dev` — local dev server (port 3000)
 - `npm run build` — production build (runs `next build`)
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run lint` — ESLint
+- `npm test` — Node test suite
+- `npm run smoke` — deployed staging HTTP/asset checks; URL override and limits in `DEPLOYMENT.md`
+
+CI (`.github/workflows/ci.yml`) runs install, lint, typecheck, tests, build and a separate local headless SEO/analytics smoke job on PRs and pushes to `main`/`staging`. It does not deploy.
 
 ## Instructions
 
