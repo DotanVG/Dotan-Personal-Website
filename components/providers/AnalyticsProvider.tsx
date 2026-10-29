@@ -26,7 +26,7 @@ export function AnalyticsProvider() {
       <Script id="provesrc" strategy="afterInteractive">
         {`
           if (!window.provesrc) {
-            !function(o,i){provesrc=window.provesrc={dq:[],display:function(){this.dq.push(arguments)}},o._provesrcAsyncInit=function(){provesrc.init({apiKey:"${site.services.proveSourceApiKey}",v:"${site.services.proveSourceVersion}"})};var r=i.createElement("script");r.type="text/javascript",r.async=!0,r["ch"+"ar"+"set"]="UTF-8",r.src="https://cdn.provesrc.com/provesrc.js";var e=i.getElementsByTagName("script")[0];e.parentNode.insertBefore(r,e)}(window,document);
+            !function(o,i){provesrc=window.provesrc={dq:[],display:function(){this.dq.push(arguments)}},o._provesrcAsyncInit=function(){provesrc.init({apiKey:${JSON.stringify(site.services.proveSourceApiKey).replace(/</g, "\\u003c")},v:${JSON.stringify(site.services.proveSourceVersion).replace(/</g, "\\u003c")}})};var r=i.createElement("script");r.type="text/javascript",r.async=!0,r["ch"+"ar"+"set"]="UTF-8",r.src="https://cdn.provesrc.com/provesrc.js";var e=i.getElementsByTagName("script")[0];e.parentNode.insertBefore(r,e)}(window,document);
           }
         `}
       </Script>
