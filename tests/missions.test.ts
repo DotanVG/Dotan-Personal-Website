@@ -83,7 +83,7 @@ test("the hint points at the nearest unread landmark, and never leads with Zota"
 });
 
 test("Coast Run still needs the lighthouse when it has not been read", () => {
-  let state: MissionState = { ...DEFAULT_MISSIONS, visited: ["ness", "kanomi", "electra"], done: ["read-city"] };
+  const state: MissionState = { ...DEFAULT_MISSIONS, visited: ["ness", "kanomi", "electra"], done: ["read-city"] };
   const arrived = applyEvent(state, { type: "arrive", slug: "naval" });
   assert.equal(arrived.completed, undefined);
   assert.equal(arrived.state.drove, true);

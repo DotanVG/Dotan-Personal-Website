@@ -79,7 +79,7 @@ Key commands:
 - `npm run dev` — local dev server (port 3000)
 - `npm run build` — production build (runs `next build`)
 - `npm run typecheck` — `tsc --noEmit`
-- `npm run lint` — ESLint
+- `npm run lint` — `eslint .` using ESLint 9 and `eslint.config.mjs` (Next core-web-vitals + TypeScript rules)
 - `npm test` — Node test suite
 - `npm run smoke` — deployed staging HTTP/asset checks; URL override and limits in `DEPLOYMENT.md`
 
