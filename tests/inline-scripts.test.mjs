@@ -11,7 +11,7 @@ const payloads = [
 
 test("JSON-LD cannot close its script element and round-trips content", () => {
   const source = readFileSync("app/layout.tsx", "utf8");
-  const expression = source.match(/__html: (.*?) \}\}/)?.[1];
+  const expression = source.match(/__html: (JSON\.stringify\(profileJsonLd\).*?) \}\}/)?.[1];
   assert.ok(expression, "use the actual layout serialization expression");
   for (const name of payloads) {
     const profileJsonLd = { "@type": "Person", name };

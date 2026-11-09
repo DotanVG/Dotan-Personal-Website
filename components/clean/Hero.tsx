@@ -121,7 +121,7 @@ export function Hero() {
         transition={{ delay: 1.2 }}
         className="absolute inset-x-0 bottom-6 z-10 flex justify-center"
       >
-        <div className="flex flex-col items-center gap-2 text-xs uppercase tracking-[0.2em] text-ink/50">
+        <div className="flex flex-col items-center gap-2 text-xs uppercase tracking-[0.2em] text-ink/60 dark:text-ink/50">
           <span>Scroll</span>
           <div className="h-8 w-px bg-line" />
         </div>

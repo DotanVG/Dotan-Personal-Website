@@ -150,7 +150,7 @@ export function ContactForm({ compact = false, onStatusChange }: { compact?: boo
             />
 
             <div className="mt-2 flex items-center justify-between gap-4">
-              <p className="text-xs text-ink/50">
+              <p className="text-xs text-ink/60 dark:text-ink/50">
                 Powered by Formspree. No spam, ever.
               </p>
               <button

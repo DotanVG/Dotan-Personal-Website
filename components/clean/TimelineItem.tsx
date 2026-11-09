@@ -56,7 +56,7 @@ export function TimelineItem({ item, idx }: { item: TimelineRecord; idx: number 
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
-          <div className="font-mono text-xs uppercase tracking-[0.18em] text-ink/50 transition-colors duration-300 group-hover:text-ink/80">
+          <div className="font-mono text-xs uppercase tracking-[0.18em] text-ink/60 transition-colors duration-300 group-hover:text-ink/80 dark:text-ink/50">
             {item.start}
             {item.start !== item.end ? ` - ${item.end}` : ""}
             {item.current ? " · Present" : ""}
