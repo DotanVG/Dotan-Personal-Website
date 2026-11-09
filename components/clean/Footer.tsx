@@ -75,7 +75,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-line/50">
-        <div className="mx-auto flex max-w-page items-center justify-between px-6 py-5 text-xs text-ink/50 md:px-8">
+        <div className="mx-auto flex max-w-page items-center justify-between px-6 py-5 text-xs text-ink/60 md:px-8 dark:text-ink/50">
           <span>© {new Date().getFullYear()} Dotan Veretzky.</span>
           <span>Built with Next.js · React · Three.js</span>
         </div>

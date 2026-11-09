@@ -26,7 +26,7 @@ export function About() {
           <RevealOnScroll>
             <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-balance md:text-6xl">
               I build software the way I make games:{"\ "}
-              <span className="text-ink/40 transition-colors duration-700 hover:text-ink">
+              <span className="text-ink/50 transition-colors duration-700 hover:text-ink dark:text-ink/40">
                 curious, deliberate, playful.
               </span>
             </h2>
@@ -172,7 +172,7 @@ function AvatarTilt() {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="group flex flex-col gap-1 border-b border-line/60 py-3 sm:flex-row sm:items-baseline sm:gap-4">
-      <dt className="w-24 shrink-0 font-mono text-xs uppercase tracking-[0.18em] text-ink/50 transition-colors duration-300 group-hover:text-ink/80">
+      <dt className="w-24 shrink-0 font-mono text-xs uppercase tracking-[0.18em] text-ink/60 transition-colors duration-300 group-hover:text-ink/80 dark:text-ink/50">
         {label}
       </dt>
       <dd className="text-sm text-ink/80 transition-colors duration-300 group-hover:text-ink md:text-base">

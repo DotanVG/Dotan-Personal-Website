@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { themeBootScript } from "@/lib/theme";
 import { AnalyticsProvider } from "@/components/providers/AnalyticsProvider";
 import { profileJsonLd, site } from "@/content/site";
 import "./globals.css";
@@ -89,6 +90,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sans.variable} ${display.variable} ${mono.variable}`}
     >
+      <head>
+        <script id="theme-boot" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="bg-canvas text-ink antialiased">
         <noscript>
           <style>{`[data-scroll-reveal] { opacity: 1 !important; transform: none !important; }`}</style>
@@ -97,7 +101,7 @@ export default function RootLayout({
         <AnalyticsProvider />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd).replace(/</g, "\\u003c") }}
         />
       </body>
     </html>

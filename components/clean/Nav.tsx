@@ -8,6 +8,7 @@ import { ModeToggle } from "@/components/mode/ModeToggle";
 
 const links = [
   { href: "#about", label: "About" },
+  { href: "#projects", label: "Projects" },
   { href: "#experience", label: "Experience" },
   { href: "#education", label: "Education" },
   { href: "#contact", label: "Contact" },
@@ -64,7 +65,7 @@ export function Nav() {
           />
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {links.map((l) => {
             const isActive = active === l.href.slice(1);
             return (
@@ -105,7 +106,7 @@ export function Nav() {
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label="Toggle menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line transition-colors hover:bg-canvas-raised md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line transition-colors hover:bg-canvas-raised lg:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
               {open ? "×" : "≡"}
@@ -115,7 +116,7 @@ export function Nav() {
       </nav>
 
       {open && (
-        <div className="border-t border-line/70 bg-canvas/95 backdrop-blur md:hidden">
+        <div className="border-t border-line/70 bg-canvas/95 backdrop-blur lg:hidden">
           <div className="mx-auto flex max-w-page flex-col gap-1 px-4 py-3">
             {links.map((l) => (
               <Link
