@@ -17,7 +17,7 @@ export function Contact() {
         </p>
         <h2 className="max-w-3xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">
           Let&apos;s build{"\ "}
-          <span className="text-ink/40 transition-colors duration-700 hover:text-ink">
+          <span className="text-ink/50 transition-colors duration-700 hover:text-ink dark:text-ink/40">
             something.
           </span>
         </h2>

@@ -9,7 +9,8 @@
     --canvas-inset: 235 235 235;
     --ink: 10 10 10;
     --ink-muted: 90 90 90;
-    --ink-subtle: 140 140 140;
+    --ink-subtle: 104 104 104;
+    color-scheme: light;
     --line: 220 220 220;
     --accent: 16 16 16;
     --accent-glow: 250 204 21;
@@ -21,7 +22,8 @@
     --canvas-inset: 6 6 6;
     --ink: 245 245 245;
     --ink-muted: 165 165 165;
-    --ink-subtle: 110 110 110;
+    --ink-subtle: 140 140 140;
+    color-scheme: dark;
     --line: 38 38 38;
     --accent: 245 245 245;
     --accent-glow: 250 204 21;
