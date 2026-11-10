@@ -44,6 +44,8 @@ export function ThemeToggle({ className }: { className?: string }) {
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let disposed = false;
+    // A lost WebGL context stays lost on this canvas; don't try to remount on it.
+    let contextLost = false;
     let offscreen = false;
     let hidden = document.visibilityState === "hidden";
 
@@ -58,9 +60,10 @@ export function ThemeToggle({ className }: { className?: string }) {
     }
 
     function ensureGlass() {
-      if (disposed || glassRef.current) return;
+      if (disposed || contextLost || glassRef.current) return;
       const initial = thumbForTheme(darkOnClient() ? "dark" : "light");
       const controller = mountGlassToggle(canvas!, initial, () => {
+        contextLost = true;
         if (!disposed) destroyGlass();
       });
       if (!controller || !shouldUseGlassShader(reducedRef.current, true)) {

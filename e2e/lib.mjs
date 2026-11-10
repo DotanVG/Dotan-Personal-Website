@@ -44,7 +44,9 @@ export const realErrors = (logs) =>
   logs.filter((l) =>
     !/Failed to load resource: net::ERR_FAILED|preloaded using link preload/.test(l) &&
     // Linux Chromium lacks Bluetooth support; the deny policy still stays in place.
-    l !== "warning: Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'."
+    l !== "warning: Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'." &&
+    // Headless software GL reports driver performance hints (e.g. ReadPixels stalls); not app errors.
+    !/^warning: \[\.WebGL-[^\]]+\]GL Driver Message \(OpenGL, Performance,/.test(l)
   );
 
 export async function openExplore(page, query = "?mode=explore", { settle = "time" } = {}) {
