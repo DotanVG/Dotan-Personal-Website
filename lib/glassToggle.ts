@@ -50,8 +50,25 @@ export function morphDuration(distance: number): number {
   return Math.max(140, Math.abs(distance) * THEME_MORPH_MS);
 }
 
-export function shouldUseGlassShader(reducedMotion: boolean, hasWebGL: boolean): boolean {
-  return hasWebGL && !reducedMotion;
+/** Glass stays on under reduced motion; only a missing WebGL context falls back. */
+export function shouldUseGlassShader(_reducedMotion: boolean, hasWebGL: boolean): boolean {
+  return hasWebGL;
+}
+
+export type GlassThumbSettler = {
+  setThumb: (value: number) => void;
+  animateTo: (value: number) => void;
+};
+
+/** Finger-following motion stays live; autonomous travel snaps under reduced motion. */
+export function settleGlassThumb(
+  glass: GlassThumbSettler | null | undefined,
+  value: number,
+  reducedMotion: boolean,
+): void {
+  if (!glass) return;
+  if (reducedMotion) glass.setThumb(value);
+  else glass.animateTo(value);
 }
 
 /** 0 or 255 masks. Sun is symmetric; the moon is a crescent with two stars. */

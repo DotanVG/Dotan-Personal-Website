@@ -6,6 +6,7 @@ import { mountGlassToggle, type GlassController } from "@/components/ui/glassTog
 import {
   GLASS_CANVAS,
   pointerBecameDrag,
+  settleGlassThumb,
   shouldUseGlassShader,
   themeForThumb,
   thumbForTheme,
@@ -47,7 +48,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     let hidden = document.visibilityState === "hidden";
 
     function syncSuspend() {
-      glassRef.current?.suspend(offscreen || hidden || reducedRef.current);
+      glassRef.current?.suspend(offscreen || hidden);
     }
 
     function destroyGlass() {
@@ -57,7 +58,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     }
 
     function ensureGlass() {
-      if (disposed || reducedRef.current || glassRef.current) return;
+      if (disposed || glassRef.current) return;
       const initial = thumbForTheme(darkOnClient() ? "dark" : "light");
       const controller = mountGlassToggle(canvas!, initial, () => {
         if (!disposed) destroyGlass();
@@ -73,8 +74,14 @@ export function ThemeToggle({ className }: { className?: string }) {
 
     function applyMotion() {
       reducedRef.current = motion.matches;
-      if (motion.matches) destroyGlass();
-      else ensureGlass();
+      ensureGlass();
+      if (motion.matches) {
+        settleGlassThumb(
+          glassRef.current,
+          thumbForTheme(darkOnClient() ? "dark" : "light"),
+          true,
+        );
+      }
     }
 
     applyMotion();
@@ -100,7 +107,11 @@ export function ThemeToggle({ className }: { className?: string }) {
         queued = false;
         const glass = glassRef.current;
         if (!glass || writing.current || dragRef.current.dragging || disposed) return;
-        glass.animateTo(thumbForTheme(darkOnClient() ? "dark" : "light"));
+        settleGlassThumb(
+          glass,
+          thumbForTheme(darkOnClient() ? "dark" : "light"),
+          reducedRef.current,
+        );
       });
     });
     theme.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
@@ -127,7 +138,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   function toggleFromClick() {
     const next = darkOnClient() ? "light" : "dark";
-    if (!reducedRef.current) glassRef.current?.animateTo(thumbForTheme(next));
+    settleGlassThumb(glassRef.current, thumbForTheme(next), reducedRef.current);
     commit(next);
   }
 
@@ -151,12 +162,15 @@ export function ThemeToggle({ className }: { className?: string }) {
         aria-checked={isDark}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
+          // A drag's follow-up click may never arrive on some touch paths;
+          // drop a stale suppress flag so the next tap can still toggle.
+          suppressClick.current = false;
           dragRef.current = { active: true, dragging: false, x: event.clientX, y: event.clientY };
           event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
           const drag = dragRef.current;
-          if (!drag.active || reducedRef.current || !glassRef.current) return;
+          if (!drag.active || !glassRef.current) return;
           const dx = event.clientX - drag.x;
           const dy = event.clientY - drag.y;
           if (!drag.dragging && !pointerBecameDrag(dx, dy)) return;
@@ -172,13 +186,17 @@ export function ThemeToggle({ className }: { className?: string }) {
           suppressClick.current = true;
           const rect = event.currentTarget.getBoundingClientRect();
           const theme = themeForThumb(thumbFromPointer(event.clientX, rect.left, rect.width));
-          glassRef.current.animateTo(thumbForTheme(theme));
+          settleGlassThumb(glassRef.current, thumbForTheme(theme), reducedRef.current);
           commit(theme);
         }}
         onPointerCancel={() => {
           dragRef.current = { active: false, dragging: false, x: 0, y: 0 };
           suppressClick.current = false;
-          glassRef.current?.animateTo(thumbForTheme(darkOnClient() ? "dark" : "light"));
+          settleGlassThumb(
+            glassRef.current,
+            thumbForTheme(darkOnClient() ? "dark" : "light"),
+            reducedRef.current,
+          );
         }}
         onClick={() => {
           if (suppressClick.current) {
