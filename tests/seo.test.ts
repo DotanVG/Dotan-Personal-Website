@@ -5,7 +5,7 @@ import sitemap from "../app/sitemap";
 import { lastContentChange, profileJsonLd, site } from "../content/site";
 
 test("sitemap contains only the canonical root with a stable content date", () => {
-  assert.equal(lastContentChange, "2026-10-27");
+  assert.equal(lastContentChange, "2026-11-10");
   assert.deepEqual(sitemap(), [{ url: site.url, lastModified: lastContentChange }]);
 });
 

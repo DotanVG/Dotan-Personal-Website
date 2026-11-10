@@ -1,7 +1,7 @@
 import type { SiteConfig } from "@/types";
 
 // Bump only when the visible portfolio content changes significantly.
-export const lastContentChange = "2026-10-27";
+export const lastContentChange = "2026-11-10";
 
 export const site: SiteConfig = {
   name: "Dotan",
