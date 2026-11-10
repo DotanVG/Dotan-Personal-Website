@@ -9,6 +9,7 @@ import {
   maskLitCount,
   morphDuration,
   pointerBecameDrag,
+  settleGlassThumb,
   shouldUseGlassShader,
   themeForThumb,
   thumbForTheme,
@@ -53,10 +54,28 @@ test("a small pointer wobble is a click and a sideways move is a drag", () => {
   assert.equal(pointerBecameDrag(3, 4), true);
 });
 
-test("shader motion is skipped for reduced motion or missing WebGL", () => {
+test("glass shader is used whenever WebGL is available, including reduced motion", () => {
   assert.equal(shouldUseGlassShader(false, true), true);
-  assert.equal(shouldUseGlassShader(true, true), false);
+  assert.equal(shouldUseGlassShader(true, true), true);
   assert.equal(shouldUseGlassShader(false, false), false);
+  assert.equal(shouldUseGlassShader(true, false), false);
+});
+
+test("reduced motion snaps the thumb instead of easing it", () => {
+  const calls: string[] = [];
+  const glass = {
+    setThumb(value: number) {
+      calls.push(`snap:${value}`);
+    },
+    animateTo(value: number) {
+      calls.push(`animate:${value}`);
+    },
+  };
+  settleGlassThumb(glass, 1, false);
+  settleGlassThumb(glass, 0, true);
+  settleGlassThumb(null, 1, true);
+  settleGlassThumb(undefined, 0, false);
+  assert.deepEqual(calls, ["animate:1", "snap:0"]);
 });
 
 test("morph timing eases out and short snaps stay quick", () => {
