@@ -1,8 +1,11 @@
 import Image from "next/image";
 import { selectedProjects } from "@/content/selected-projects";
 import { selectedProjectImages } from "@/content/selected-project-images";
+import { featuredDesktopColumns } from "@/lib/featuredGrid";
+import { cn } from "@/lib/cn";
 
 export function Projects() {
+  const desktopColumns = featuredDesktopColumns(selectedProjects.length);
   return (
     <section
       id="projects"
@@ -16,7 +19,12 @@ export function Projects() {
         Selected projects
       </h2>
 
-      <ul className="mt-12 grid auto-rows-fr grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <ul
+        className={cn(
+          "mt-12 grid auto-rows-fr grid-cols-1 items-stretch gap-6 md:grid-cols-2",
+          desktopColumns === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3",
+        )}
+      >
         {selectedProjects.map((project, index) => {
           const image = selectedProjectImages[project.url];
           return (
@@ -34,7 +42,7 @@ export function Projects() {
                         src={image.src}
                         alt={image.alt}
                         fill
-                        sizes="(min-width: 1024px) 360px, (min-width: 768px) 45vw, 92vw"
+                        sizes="(min-width: 1024px) 45vw, (min-width: 768px) 45vw, 92vw"
                         className="object-cover"
                         loading={index === 0 ? "eager" : "lazy"}
                       />
