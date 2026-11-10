@@ -12,7 +12,9 @@
     "build:e2e": "node e2e/build.mjs",
     "test:e2e": "node --test --test-concurrency=1 e2e/*.spec.mjs",
     "test:e2e:smoke": "node --test --test-concurrency=1 e2e/seo.spec.mjs e2e/analytics-loading.spec.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "fetch-project-images": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/resolve-ts.mjs scripts/fetch-project-images.ts",
+    "prebuild": "npm run fetch-project-images"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
@@ -41,6 +43,7 @@
     "eslint-config-next": "^15.5.5",
     "playwright-core": "1.63.0",
     "postcss": "^8.5.29",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
   },

@@ -32,3 +32,13 @@ test("the clean page mounts projects and its Hero CTA and navigation reach them"
   assert.match(section, /<h2[\s\S]*?>\s*Selected projects/);
   assert.match(section, /<article[\s\S]*?<h3/);
 });
+
+test("featured project cards are image-forward links to the live project, with local previews or a fallback", () => {
+  const section = readFileSync(new URL("../components/clean/Projects.tsx", import.meta.url), "utf8");
+  assert.match(section, /grid-cols-1[\s\S]*md:grid-cols-2[\s\S]*lg:grid-cols-3/);
+  assert.match(section, /aspect-video/);
+  assert.doesNotMatch(section, /line-clamp|truncate/);
+  assert.match(section, /selectedProjectImages/);
+  assert.match(section, /href=\{project\.url\}/);
+  assert.match(section, /via-accent-glow/);
+});
