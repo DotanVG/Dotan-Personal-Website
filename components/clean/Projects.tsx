@@ -27,6 +27,10 @@ export function Projects() {
       >
         {selectedProjects.map((project, index) => {
           const image = selectedProjectImages[project.url];
+          const sizes =
+            desktopColumns === 2
+              ? "(min-width: 768px) 45vw, 100vw"
+              : "(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw";
           return (
             <li key={project.sourceUrl} className="min-w-0">
               <article className="h-full">
@@ -42,7 +46,7 @@ export function Projects() {
                         src={image.src}
                         alt={image.alt}
                         fill
-                        sizes="(min-width: 1024px) 45vw, (min-width: 768px) 45vw, 92vw"
+                        sizes={sizes}
                         className="object-cover"
                         loading={index === 0 ? "eager" : "lazy"}
                       />

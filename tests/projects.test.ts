@@ -44,6 +44,9 @@ test("featured project cards are image-forward links to the live project, with l
   assert.match(section, /selectedProjectImages/);
   assert.match(section, /href=\{project\.url\}/);
   assert.match(section, /via-accent-glow/);
+  assert.match(section, /desktopColumns === 2/);
+  assert.match(section, /\(min-width: 768px\) 45vw, 100vw/);
+  assert.match(section, /\(min-width: 1024px\) 30vw, \(min-width: 768px\) 45vw, 100vw/);
 });
 
 test("featuredDesktopColumns uses two desktop columns for four projects, three when divisible by three", () => {
