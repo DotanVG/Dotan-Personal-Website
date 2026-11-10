@@ -53,6 +53,8 @@ export const profileJsonLd = {
       url: site.url,
       image: `${site.url}/images/avatar.jpg`,
       jobTitle: site.tagline,
+      description:
+        "Software engineer, game developer, web and AI developer",
       sameAs: [site.social.linkedin, site.social.github, site.social.itch],
     },
     {

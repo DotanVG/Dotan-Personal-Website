@@ -1,0 +1,32 @@
+# Dotan Veretzky
+
+> Personal portfolio of Dotan Veretzky, a software engineer, game developer, web and AI developer based in Israel. The site can be read as a clean portfolio or walked through as a 3D coastal city.
+
+## About
+
+- [Dotan Veretzky](https://dotanv.vercel.app/): software engineer, game developer, web and AI developer.
+- [LinkedIn](https://www.linkedin.com/in/dotan-v/)
+- [GitHub](https://github.com/DotanVG)
+- [Personal site](https://dotanv.vercel.app/)
+- [itch.io](https://dotanv.itch.io/)
+
+## Site
+
+- [Portfolio](https://dotanv.vercel.app/): about, selected projects, experience, education, and contact.
+- [About](https://dotanv.vercel.app/#about)
+- [Projects](https://dotanv.vercel.app/#projects)
+- [Experience](https://dotanv.vercel.app/#experience)
+- [Education](https://dotanv.vercel.app/#education)
+- [Contact](https://dotanv.vercel.app/#contact)
+- [Explore mode](https://dotanv.vercel.app/?mode=explore): walkable 3D city version of the same portfolio.
+
+## Selected projects
+
+- [BeatEmPie](https://beat-em-pie.vercel.app/): browser beat 'em up.
+- [Orbital Breach](https://orbital-breach.vercel.app/): zero-gravity multiplayer shooter.
+- [Count Dawn](https://count-dawn.vercel.app/): reverse horde survival game.
+- [URL Metadata Fetcher](https://react-node-url-mdata-fetch-dotanv.netlify.app/): inspect Open Graph, Twitter Card, JSON-LD, and HTML metadata.
+
+## Source
+
+- [GitHub repository](https://github.com/DotanVG/Dotan-Personal-Website)
