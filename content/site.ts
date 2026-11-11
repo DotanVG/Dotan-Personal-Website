@@ -1,7 +1,7 @@
 import type { SiteConfig } from "@/types";
 
 // Bump only when the visible portfolio content changes significantly.
-export const lastContentChange = "2026-10-27";
+export const lastContentChange = "2026-11-10";
 
 export const site: SiteConfig = {
   name: "Dotan",
@@ -53,6 +53,8 @@ export const profileJsonLd = {
       url: site.url,
       image: `${site.url}/images/avatar.jpg`,
       jobTitle: site.tagline,
+      description:
+        "Software engineer, game developer, web and AI developer",
       sameAs: [site.social.linkedin, site.social.github, site.social.itch],
     },
     {

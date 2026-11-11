@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { selectedProjects } from "@/content/selected-projects";
+import { featuredDesktopColumns } from "@/lib/featuredGrid";
 
 test("selected projects use only the approved public sources and HTTPS links", () => {
   assert.deepEqual(
@@ -31,4 +32,30 @@ test("the clean page mounts projects and its Hero CTA and navigation reach them"
   assert.match(section, /<section\s+id="projects"/);
   assert.match(section, /<h2[\s\S]*?>\s*Selected projects/);
   assert.match(section, /<article[\s\S]*?<h3/);
+});
+
+test("featured project cards are image-forward links to the live project, with local previews or a fallback", () => {
+  const section = readFileSync(new URL("../components/clean/Projects.tsx", import.meta.url), "utf8");
+  assert.match(section, /grid-cols-1/);
+  assert.match(section, /md:grid-cols-2/);
+  assert.match(section, /featuredDesktopColumns/);
+  assert.match(section, /aspect-video/);
+  assert.doesNotMatch(section, /line-clamp|truncate/);
+  assert.match(section, /selectedProjectImages/);
+  assert.match(section, /href=\{project\.url\}/);
+  assert.match(section, /via-accent-glow/);
+  assert.match(section, /desktopColumns === 2/);
+  assert.match(section, /\(min-width: 768px\) 45vw, 100vw/);
+  assert.match(section, /\(min-width: 1024px\) 30vw, \(min-width: 768px\) 45vw, 100vw/);
+});
+
+test("featuredDesktopColumns uses two desktop columns for four projects, three when divisible by three", () => {
+  assert.equal(featuredDesktopColumns(4), 2);
+  assert.equal(featuredDesktopColumns(2), 2);
+  assert.equal(featuredDesktopColumns(8), 2);
+  assert.equal(featuredDesktopColumns(3), 3);
+  assert.equal(featuredDesktopColumns(6), 3);
+  assert.equal(featuredDesktopColumns(5), 3);
+  assert.equal(selectedProjects.length, 4);
+  assert.equal(featuredDesktopColumns(selectedProjects.length), 2);
 });

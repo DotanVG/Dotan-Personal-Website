@@ -1,6 +1,11 @@
+import Image from "next/image";
 import { selectedProjects } from "@/content/selected-projects";
+import { selectedProjectImages } from "@/content/selected-project-images";
+import { featuredDesktopColumns } from "@/lib/featuredGrid";
+import { cn } from "@/lib/cn";
 
 export function Projects() {
+  const desktopColumns = featuredDesktopColumns(selectedProjects.length);
   return (
     <section
       id="projects"
@@ -14,41 +19,58 @@ export function Projects() {
         Selected projects
       </h2>
 
-      <div className="mt-12 divide-y divide-line border-y border-line">
-        {selectedProjects.map((project) => (
-          <article
-            key={project.sourceUrl}
-            className="grid gap-4 py-8 md:grid-cols-12 md:gap-8 md:py-10"
-          >
-            <h3 className="font-display text-2xl font-semibold tracking-tight md:col-span-4">
-              {project.title}
-            </h3>
-            <div className="min-w-0 md:col-span-8">
-              <p className="max-w-prose text-base leading-relaxed text-ink/80 md:text-lg">
-                {project.description}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-ink/70">
-                {project.role} · {project.tags.join(" · ")}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+      <ul
+        className={cn(
+          "mt-12 grid auto-rows-fr grid-cols-1 items-stretch gap-6 md:grid-cols-2",
+          desktopColumns === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3",
+        )}
+      >
+        {selectedProjects.map((project, index) => {
+          const image = selectedProjectImages[project.url];
+          const sizes =
+            desktopColumns === 2
+              ? "(min-width: 768px) 45vw, 100vw"
+              : "(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw";
+          return (
+            <li key={project.sourceUrl} className="min-w-0">
+              <article className="h-full">
                 <a
                   href={project.url}
-                  className="inline-flex min-h-11 items-center font-medium underline underline-offset-4 hover:text-ink/70"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="project-card flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-canvas-raised/60 backdrop-blur-md"
                 >
-                  {project.title === "URL Metadata Fetcher" ? "Try" : "Play"}{" "}
-                  {project.title}
+                  <div className="relative aspect-video overflow-hidden bg-canvas-inset">
+                    {image ? (
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        fill
+                        sizes={sizes}
+                        className="object-cover"
+                        loading={index === 0 ? "eager" : "lazy"}
+                      />
+                    ) : (
+                      <div
+                        aria-hidden
+                        className="absolute inset-0 bg-gradient-to-br from-canvas-inset via-accent-glow/30 to-ink/15 dark:from-canvas-raised dark:via-accent-glow/25 dark:to-ink/30"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-5 md:p-6">
+                    <h3 className="font-display text-2xl font-semibold tracking-tight text-balance">
+                      {project.title}
+                    </h3>
+                    <p className="text-pretty text-base leading-relaxed text-ink/80 md:text-lg">
+                      {project.description}
+                    </p>
+                  </div>
                 </a>
-                <a
-                  href={project.sourceUrl}
-                  className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-ink/70"
-                >
-                  {project.title} source on GitHub
-                </a>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+              </article>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

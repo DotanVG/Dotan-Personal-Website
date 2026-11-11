@@ -13,6 +13,7 @@ export function ScrollProgress() {
     <motion.div
       aria-hidden
       style={{ scaleX, transformOrigin: "0% 50%" }}
+      data-scroll-progress
       className="pointer-events-none fixed inset-x-0 top-0 z-50 h-[2px] bg-ink/80"
     />
   );

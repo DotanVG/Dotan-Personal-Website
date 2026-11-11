@@ -52,7 +52,7 @@ for (const width of [390, 1440]) {
           await page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: true });
           const schema = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
           assert.equal(schema["@graph"][0]["@id"], "https://dotanv.vercel.app/#person");
-          assert.equal(schema["@graph"][1].dateModified, "2026-10-27");
+          assert.equal(schema["@graph"][1].dateModified, "2026-11-10");
           report(name, { width, javaScriptEnabled, reducedMotion, visible: results });
         } finally {
           await browser.close();
