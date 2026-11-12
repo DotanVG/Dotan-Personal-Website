@@ -5,7 +5,8 @@ import * as THREE from "three";
 import { createCity, CURB_HEIGHT, MONUMENT_SPOT, type City } from "@/lib/game/city";
 import { damp } from "@/lib/game/math";
 import { checklist, chipModel, liveProjectCount, missionBrief, type MissionTarget, type RewardCopy } from "@/lib/game/missions";
-import { HelpContent, Modal } from "./Dialogs";
+import { HelpContent } from "./Dialogs";
+import { Modal } from "./Modal";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
 import { bannerGeometry, beamModel, pillarModel, statueModel } from "./monument";
 import { missionRefs, useExploreUi } from "./uiStore";
@@ -24,7 +25,6 @@ function useNarrowChip() {
   return narrow;
 }
 
-/** Quest chip. Opens the mission panel. Guidance itself is the screen marker, not this button. */
 export function MissionChip({ driving }: { driving: boolean }) {
   const missions = useExploreUi((s) => s.missions);
   const aim = useExploreUi((s) => s.aim);
@@ -46,7 +46,6 @@ export function MissionChip({ driving }: { driving: boolean }) {
 
 const _v = new THREE.Vector3();
 
-/** Screen marker. Called from the HUD frame. Positions a DOM node; no React state. */
 export function updateGuideMarker(camera: THREE.PerspectiveCamera, target: MissionTarget | null, player: { x: number; z: number }) {
   const el = missionRefs.marker;
   if (!el) return;
@@ -366,7 +365,6 @@ function Pillar() {
   return <mesh ref={ref} geometry={geo} material={mat} frustumCulled={false} />;
 }
 
-/** Monument, banners, lighthouse beam and the guide pillar. Explore chunk only. */
 export function MissionScenery({ city }: { city: City }) {
   const revealed = useExploreUi((s) => s.revealed);
   const visited = useExploreUi((s) => s.missions.visited);
