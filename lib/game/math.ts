@@ -1,3 +1,5 @@
+// Small numeric helpers shared by the simulation. Pure, allocation-free.
+//
 // Conventions used across lib/game:
 // - 1 world unit = 1 metre, time in seconds.
 // - Ground plane is X/Z, Y is up.
@@ -13,6 +15,7 @@ export function approach(v: number, target: number, maxDelta: number): number {
   return Math.max(v - maxDelta, target);
 }
 
+/** Frame-rate independent exponential smoothing. */
 export const damp = (a: number, b: number, lambda: number, dt: number) =>
   lerp(a, b, 1 - Math.exp(-lambda * dt));
 

@@ -1,3 +1,6 @@
+// Explore missions: one pure table and a reducer. No quest framework beyond this.
+// Missions 3 and 4 stay in the table but only turn on when the games list is non-empty.
+
 import { projects } from "@/content/projects";
 import { LANDMARK_SLUGS, type City } from "./city";
 
@@ -62,6 +65,7 @@ export function activeMissionIds(projectCount: number): MissionId[] {
   return ids;
 }
 
+/** Key to the City counts every landmark plus the arcade. The total follows the data, not a fixed 9. */
 export function missionGoal(id: MissionId, projectCount: number): number {
   if (id === "read-city") return READ_GOAL;
   if (id === "coast-run") return 3;
@@ -168,6 +172,7 @@ function missionMet(state: MissionState, id: MissionId, projectCount: number): b
   return keyCount(state.visited, projectCount) >= missionGoal("key", projectCount);
 }
 
+/** Mark every mission whose work is already done. Stops at the first one that still needs a new visit. */
 export function reconcile(state: MissionState, projectCount = liveProjectCount()): { state: MissionState; completed: MissionId[] } {
   const completed: MissionId[] = [];
   let next = state;
@@ -235,6 +240,7 @@ function nearestCar(cars: readonly GuideCar[], player: GuidePlayer): GuideCar | 
   return best;
 }
 
+/** Arrow target. Null when missions are hidden or the chain is finished. */
 export function currentTarget(
   state: MissionState,
   city: City,

@@ -9,6 +9,7 @@ import { MeshBuilder } from "./meshBuilder";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
 import { blobTexture } from "./blobTexture";
 
+// Dotan: navy trousers, teal shirt, a mustard backpack for a readable silhouette.
 const SKIN = "#e2ae86";
 const HAIR = "#3a2a21";
 const SHIRT = "#2b7f8e";
@@ -101,6 +102,7 @@ export function Avatar() {
       shadow.current.scale.set(k, 1, k);
     }
 
+    // Walk / run cycle tied to distance travelled (no foot sliding).
     const speed = p.moveSpeed;
     const phase = p.walkPhase * Math.PI;
     const amp = Math.min(0.95, speed * 0.13);

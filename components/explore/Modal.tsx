@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
+/** Native modal dialog: focus moves in, Escape/backdrop close, focus returns on close. */
 export function Modal({
   open,
   onClose,

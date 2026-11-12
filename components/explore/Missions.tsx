@@ -25,6 +25,7 @@ function useNarrowChip() {
   return narrow;
 }
 
+/** Quest chip. Opens the mission panel. Guidance itself is the screen marker, not this button. */
 export function MissionChip({ driving }: { driving: boolean }) {
   const missions = useExploreUi((s) => s.missions);
   const aim = useExploreUi((s) => s.aim);
@@ -46,6 +47,7 @@ export function MissionChip({ driving }: { driving: boolean }) {
 
 const _v = new THREE.Vector3();
 
+/** Screen marker. Called from the HUD frame. Positions a DOM node; no React state. */
 export function updateGuideMarker(camera: THREE.PerspectiveCamera, target: MissionTarget | null, player: { x: number; z: number }) {
   const el = missionRefs.marker;
   if (!el) return;
@@ -365,6 +367,7 @@ function Pillar() {
   return <mesh ref={ref} geometry={geo} material={mat} frustumCulled={false} />;
 }
 
+/** Monument, banners, lighthouse beam and the guide pillar. Explore chunk only. */
 export function MissionScenery({ city }: { city: City }) {
   const revealed = useExploreUi((s) => s.revealed);
   const visited = useExploreUi((s) => s.missions.visited);
