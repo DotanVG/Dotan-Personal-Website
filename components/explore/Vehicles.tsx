@@ -7,24 +7,10 @@ import { lerp, wrapAngle } from "@/lib/game/math";
 import type { SimCar } from "@/lib/game/sim";
 import type { VehicleKind } from "@/lib/game/vehicle";
 import { CarBody, tailLightPos, wheelGeometry } from "./carMesh";
+import { blobTexture } from "./blobTexture";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
 
 const MAX_CARS = 48;
-
-export function blobTexture(): THREE.CanvasTexture {
-  const c = document.createElement("canvas");
-  c.width = c.height = 64;
-  const ctx = c.getContext("2d")!;
-  const grad = ctx.createRadialGradient(32, 32, 4, 32, 32, 32);
-  grad.addColorStop(0, "rgba(40,30,25,0.55)");
-  grad.addColorStop(0.6, "rgba(40,30,25,0.28)");
-  grad.addColorStop(1, "rgba(40,30,25,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 64, 64);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
 
 const m4 = new THREE.Matrix4();
 const m4b = new THREE.Matrix4();
@@ -36,7 +22,6 @@ const gs: GroundSample = { h: 0, gx: 0, gz: 0, surface: "road" };
 const RED = new THREE.Color("#ff3b2f");
 const WHITE = new THREE.Color("#fff8e8");
 
-/** Interpolated render transform of a car's body (including rollover). */
 export function carMatrix(c: SimCar, alpha: number, out: THREE.Matrix4) {
   const x = lerp(c.px, c.x, alpha);
   const z = lerp(c.pz, c.z, alpha);
@@ -122,7 +107,6 @@ export function Vehicles() {
       carMatrix(c, alpha, body.mesh.matrix);
       body.mesh.matrixWorldNeedsUpdate = true;
 
-      // Wheels: steer (front), spin, and a splayed wheel on wrecks.
       const spec = c.spec;
       for (let k = 0; k < 4 && wi < MAX_CARS * 4; k++) {
         const front = k < 2;
@@ -135,7 +119,6 @@ export function Vehicles() {
         res.wheels.setMatrixAt(wi++, m4);
       }
 
-      // Brake and reverse light glows at the tail.
       const braking = c.drive.brake > 0.1 && c.speed > 0.5;
       const reversing = c.speed < -0.4;
       if ((braking || reversing || (c.drive.handbrake && Math.abs(c.speed) > 1)) && c.flip < 0.2) {
@@ -150,7 +133,6 @@ export function Vehicles() {
         }
       }
 
-      // Contact shadow on the ground under the car.
       const x = lerp(c.px, c.x, alpha);
       const z = lerp(c.pz, c.z, alpha);
       sampleGround(g.city, x, z, gs);

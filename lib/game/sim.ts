@@ -442,8 +442,6 @@ export function toast(g: Game, text: string, seconds = 2.2) {
 
 const countRole = (g: Game, role: Role) => g.cars.reduce((n, c) => n + (c.role === role ? 1 : 0), 0);
 
-export const carBox = (c: Car): BoxShape => ({ x: c.x, z: c.z, hx: c.spec.halfWidth, hz: c.spec.halfLength, yaw: c.yaw });
-
 const boxA: BoxShape = { x: 0, z: 0, hx: 0, hz: 0, yaw: 0 };
 const boxB: BoxShape = { x: 0, z: 0, hx: 0, hz: 0, yaw: 0 };
 function writeBox(c: Car, b: BoxShape) {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { experience } from "@/content/experience";
 import { education } from "@/content/education";
-import { Modal } from "./Dialogs";
+import { Modal } from "./Modal";
 
 type Entry = {
   title: string;
@@ -16,7 +16,6 @@ type Entry = {
   bullets: string[];
 };
 
-/** Portfolio entry for a landmark slug, straight from the site content. */
 export function entryFor(slug: string): Entry | null {
   const e = experience.find((x) => x.slug === slug);
   if (e) return { title: e.role, subtitle: e.company, start: e.start, end: e.end, current: e.current, logo: e.logo, blurb: e.blurb, bullets: e.bullets };

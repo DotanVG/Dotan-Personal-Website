@@ -65,11 +65,6 @@ export function activeMissionIds(projectCount: number): MissionId[] {
   return ids;
 }
 
-export function missionTable(projectCount: number): MissionDef[] {
-  const ids = new Set(activeMissionIds(projectCount));
-  return TABLE.filter((m) => ids.has(m.id));
-}
-
 /** Key to the City counts every landmark plus the arcade. The total follows the data, not a fixed 9. */
 export function missionGoal(id: MissionId, projectCount: number): number {
   if (id === "read-city") return READ_GOAL;
@@ -329,7 +324,6 @@ export function chipModel(
 
 export type MissionBrief = { title: string; what: string; progress: string };
 
-/** Copy for the mission panel. One or two sentences, plus a progress fraction. */
 export function missionBrief(state: MissionState, opts: { projectCount: number; driving: boolean }): MissionBrief | null {
   if (state.hidden) return null;
   const id = currentMissionId(state, opts.projectCount);

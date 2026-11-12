@@ -7,7 +7,7 @@ import { lerp, wrapAngle } from "@/lib/game/math";
 import { RUN_MPS } from "@/lib/game/sim";
 import { MeshBuilder } from "./meshBuilder";
 import { FRAME_ORDER, useGame, useGameFrame } from "./gameContext";
-import { blobTexture } from "./Vehicles";
+import { blobTexture } from "./blobTexture";
 
 // Dotan: navy trousers, teal shirt, a mustard backpack for a readable silhouette.
 const SKIN = "#e2ae86";
@@ -50,7 +50,6 @@ export function Avatar() {
     const torso = part((b) => {
       b.box(0, 0.32, 0, 0.56, 0.64, 0.32, SHIRT);
       b.box(0, -0.02, 0, 0.5, 0.12, 0.3, PANTS);
-      // Backpack.
       b.box(0, 0.36, -0.25, 0.42, 0.5, 0.2, PACK);
       b.box(0, 0.62, -0.25, 0.34, 0.06, 0.18, "#c9953a");
     });
@@ -89,7 +88,6 @@ export function Avatar() {
     r.position.set(x, y, z);
     r.rotation.y = p.pfacing + wrapAngle(p.facing - p.pfacing) * alpha;
 
-    // Visibility and the enter/exit shrink.
     let scale = 1;
     if (p.state === "driving") scale = 0;
     else if (p.state === "entering") scale = Math.max(0, 1 - Math.max(0, p.t - 0.55) / 0.45);
